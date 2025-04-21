@@ -161,6 +161,9 @@ const Summary: React.FC<Props> = ({ setPage, summaryData }) => {
       <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setPage('news')}>
         ホームへ戻る
       </button>
+      <button className="mt-4 ml-4 px-4 py-2 bg-gray-600 text-white rounded" onClick={() => setPage('history')}>
+        履歴一覧へ
+      </button>
     </div>
   );
 };

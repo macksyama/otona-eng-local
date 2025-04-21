@@ -1,19 +1,15 @@
 {
-  "id": "b515cbab-5e09-4d63-a317-fada17035270",
+  "id": "53450190-a9cf-45ff-9964-044471b884d3",
   "model": "sonar",
-  "created": 1745218471,
+  "created": 1745220805,
   "usage": {
-    "prompt_tokens": 353,
-    "completion_tokens": 210,
-    "total_tokens": 563,
+    "prompt_tokens": 2896,
+    "completion_tokens": 265,
+    "total_tokens": 3161,
     "search_context_size": "low"
   },
   "citations": [
-    "https://ucincinnatipress.pressbooks.pub/xiao1071/chapter/evaluating-a-summary/",
-    "https://www.trentu.ca/academicskills/how-guides/how-write-university/how-approach-any-assignment/writing-article-summaries",
-    "https://www.kaggle.com/competitions/commonlit-evaluate-student-summaries",
-    "https://undergradcollege.utexas.edu/first-year-experience/signature-courses/faculty-resources/essential-element-writing/analytic-rubric/holistic-scale-grading-article-summaries",
-    "https://newsela.com/blog/read/teach-summarizing"
+    "https://www.youtube.com/watch?v=l-dIG0QnhV0"
   ],
   "object": "chat.completion",
   "choices": [
@@ -22,7 +18,7 @@
       "finish_reason": "stop",
       "message": {
         "role": "assistant",
-        "content": "{\"score\": 7, \"mistakes\": \"The summary missed important details such as the specific statements from the Chinese commerce ministry spokesperson and the broader context of tariff conflicts. It also lacks clarity and completeness.\", \"advice\": \"Try to include key quotes or paraphrased statements from the article to support the main idea. Additionally, provide a clearer overview of the article's major points.\", \"correction\": \"A more complete summary would include specific details from the article, such as the spokesperson's comments on reciprocity and the mention of tariffs.\", \"model_answer\": \"China has warned it will counter countries that form deals with the US detrimental to Beijing's interests. A Chinese commerce ministry spokesperson stated that China opposes any agreements harming its interests and will take reciprocal measures if necessary. The warning comes amid ongoing tariff disputes, with duties on Chinese goods reaching 145 percent and retaliatory tariffs on US products at 125 percent. The spokesperson emphasized that China will not accept appeasement and will stand firm against trade deals undermining its economic interests.\"}"
+        "content": "{\n  \"vocab_phrases\": [\n    {\"word\": \"professional failures\", \"meaning\": \"専門的な失敗\"},\n    {\"word\": \"operational misunderstanding\", \"meaning\": \"作戦上の誤解\"},\n    {\"word\": \"breach of orders\", \"meaning\": \"命令違反\"},\n    {\"word\": \"debrief\", \"meaning\": \"事後報告\"},\n    {\"word\": \"reprimand\", \"meaning\": \"公式の譴責処分\"}\n  ],\n  \"praise\": \"質問の基本的な情報を正確に捉えている。イスラエル軍の公式発表を引用する形で要点を押さえている。\",\n  \"improvement\": \"具体的事例の説明不足（夜間視界不良や指揮官の処分内容）。PRCSの反論や国際機関の批判について言及が不足。事件の背景（ハマスとの紛争状況）への言及が必要。\",\n  \"advice\": \"記事で使われている主要な専門用語（operational misunderstanding等）を積極的に活用し、関係者の主張と事実関係を区別して説明する練習を強化しましょう。\"\n}"
       },
       "delta": {
         "role": "assistant",

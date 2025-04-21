@@ -4,9 +4,10 @@ import Lesson from './Lesson';
 import Summary from './Summary';
 import Settings from './Settings';
 import NewsList from './NewsList';
+import HistoryList from './HistoryList';
 
 // 画面遷移用の状態
-export type Page = 'news' | 'home' | 'lesson' | 'summary' | 'settings';
+export type Page = 'news' | 'home' | 'lesson' | 'summary' | 'settings' | 'history';
 
 const App: React.FC = () => {
   const [page, setPage] = useState<Page>('news');
@@ -47,6 +48,7 @@ const App: React.FC = () => {
           {page === 'home' && <Home setPage={setPage} setArticle={setArticle} />}
           {page === 'lesson' && <Lesson article={article} setPage={setPage} setSummaryData={setSummaryData} />}
           {page === 'summary' && <Summary setPage={setPage} summaryData={summaryData} />}
+          {page === 'history' && <HistoryList setPage={setPage} />}
         </>
       )}
     </div>

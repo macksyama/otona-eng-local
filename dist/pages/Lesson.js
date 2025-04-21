@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsx_runtime_1 = require("react/jsx-runtime");
 const react_1 = require("react");
+const history_1 = require("./history");
 const ipcRenderer = window.electronAPI?.ipcRenderer;
 // 一括設問生成プロンプト
 function buildAllQuestionsPrompt(article) {
@@ -19,7 +20,7 @@ function buildSummaryPrompt(article, chat) {
             return `AI評価: スコア:${msg.score} ${msg.text}`;
         return '';
     }).join('\n');
-    return `#Order\nYou are an English teacher. Please summarize the following English lesson for the student.\n\n#Input\n- Article: ${article}\n- Lesson log:\n${log}\n\n#Task\n- Output a summary of the lesson in JSON ONLY (no explanation, no code block, no extra text).\n- The JSON must include the following fields:\n  1. \"vocab_phrases\": 学んだキーワード・フレーズ5つ（英語＋日本語訳、必ず5つ返す）例: [{\"word\": \"broker a deal\", \"meaning\": \"取引をまとめる\"}, ...]\n  2. \"praise\": ユーザーの回答で良かった点（日本語で2-3文）\n  3. \"improvement\": もっと頑張るべき点（日本語で2-3文）\n  4. \"advice\": 建設的なアドバイス（日本語で1-2文）\n\n#Output format (STRICTLY JSON ONLY, NO explanation, NO code block, NO extra text. Output ONLY valid JSON object!):\n{\n  \"vocab_phrases\": [\n    {\"word\": \"broker a deal\", \"meaning\": \"取引をまとめる\"},\n    ...\n  ],\n  \"praise\": \"...\",\n  \"improvement\": \"...\",\n  \"advice\": \"...\"\n}\n`;
+    return `#Order\nYou are an English teacher. Please summarize the following English lesson for the student.\n\n#Input\n- Article: ${article}\n- Lesson log:\n${log}\n\n#Task\n- Output a summary of the lesson in JSON ONLY (no explanation, no code block, no extra text, NO code block markers like \"\`\`\`json\" or \"\`\`\`\", NO trailing comma, NO explanation, NO extra text. Output ONLY valid JSON object!).\n- The JSON must include the following fields:\n  1. \"vocab_phrases\": 学んだキーワード・フレーズ5つ（英語＋日本語訳、必ず5つ返す）例: [{\"word\": \"broker a deal\", \"meaning\": \"取引をまとめる\"}, ...]\n  2. \"praise\": ユーザーの回答で良かった点（日本語で2-3文）\n  3. \"improvement\": もっと頑張るべき点（日本語で2-3文）\n  4. \"advice\": 建設的なアドバイス（日本語で1-2文）\n\n#Output format (STRICTLY JSON ONLY, NO explanation, NO code block, NO extra text, NO code block markers like \"\`\`\`json\" or \"\`\`\`\", NO trailing comma. Output ONLY valid JSON object!):\n{\n  \"vocab_phrases\": [\n    {\"word\": \"broker a deal\", \"meaning\": \"取引をまとめる\"},\n    ...\n  ],\n  \"praise\": \"...\",\n  \"improvement\": \"...\",\n  \"advice\": \"...\"\n}\n`;
 }
 // 先生アイコン（リアル写真・相対パス）
 const TeacherIcon = ((0, jsx_runtime_1.jsx)("img", { src: "./teacher-avatar.png", alt: "Teacher", className: "w-10 h-10 rounded-full object-cover border border-blue-200 bg-white", draggable: false }));
@@ -325,17 +326,31 @@ const Lesson = ({ article, setPage, setSummaryData }) => {
         let lastRawContent = '';
         let parsed = null;
         try {
-            const resObj = typeof res === 'string' ? JSON.parse(res) : res;
+            let match = typeof res === 'string' ? res.match(/\{[\s\S]*\}/) : null;
+            let jsonStr = match ? match[0] : res;
+            // バッククォートや```json, ```を除去
+            if (typeof jsonStr === 'string') {
+                jsonStr = jsonStr.replace(/```json[\s\S]*?```/g, '').replace(/```[\s\S]*?```/g, '').trim();
+                // 先頭・末尾のバッククォートや改行も除去
+                jsonStr = jsonStr.replace(/^`+|`+$/g, '').trim();
+                // 末尾カンマを自動除去
+                jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+                // 最初のJSONブロックのみ抽出
+                const firstJson = jsonStr.match(/\{[\s\S]*\}/);
+                if (firstJson)
+                    jsonStr = firstJson[0];
+            }
+            parsed = JSON.parse(jsonStr);
             // messageオブジェクトの詳細を出力
-            console.log('AI評価APIレスポンス全体:', JSON.stringify(resObj));
+            console.log('AI評価APIレスポンス全体:', JSON.stringify(parsed));
             // 1. 直接評価JSONの場合
-            if (resObj && typeof resObj === 'object' && 'score' in resObj) {
-                parsed = resObj;
+            if (parsed && typeof parsed === 'object' && 'score' in parsed) {
+                // ...既存の処理...
             }
             else {
                 // 2. これまで通りchoices[0].message.contentから抽出
-                console.log('AI評価応答 message:', JSON.stringify(resObj?.choices?.[0]?.message));
-                content = resObj?.choices?.[0]?.message?.content || '';
+                console.log('AI評価応答 message:', JSON.stringify(parsed?.choices?.[0]?.message));
+                content = parsed?.choices?.[0]?.message?.content || '';
                 lastRawContent = content;
                 console.log('AI評価応答 content:', content);
                 // コードブロックや説明文付きのAI応答にも対応
@@ -368,13 +383,13 @@ const Lesson = ({ article, setPage, setSummaryData }) => {
                         parsed = JSON.parse(jsonStr);
                     }
                     catch (e) {
-                        setError('AI応答のJSONパースに失敗しました。\nRaw content: ' + content + '\nError: ' + e + '\nAPIレスポンス全体: ' + JSON.stringify(res));
+                        setError('AI応答のJSONパースに失敗しました。\nRaw content: ' + content + '\nError: ' + e + '\nAPIレスポンス全体: ' + JSON.stringify(parsed));
                         setLoading(false);
                         return;
                     }
                 }
                 else {
-                    setError('AI応答のJSON抽出に失敗しました。\nRaw content: ' + content + '\nAPIレスポンス全体: ' + JSON.stringify(res));
+                    setError('AI応答のJSON抽出に失敗しました。\nRaw content: ' + content + '\nAPIレスポンス全体: ' + JSON.stringify(parsed));
                     setLoading(false);
                     return;
                 }
@@ -644,9 +659,33 @@ const Lesson = ({ article, setPage, setSummaryData }) => {
                 scores,
                 totalScore,
             });
+            // 履歴保存
+            try {
+                (0, history_1.saveLessonHistory)({
+                    lessonId: new Date().toISOString(),
+                    timestamp: new Date().toISOString(),
+                    article,
+                    questions,
+                    answers: chat
+                        .filter(msg => msg.role === 'user' || msg.role === 'ai-feedback')
+                        .map((msg, idx) => {
+                        if (msg.role === 'user') {
+                            // 対応するフィードバックを探す
+                            const feedback = chat.slice(idx + 1).find(m => m.role === 'ai-feedback');
+                            return { questionType: '', answer: msg.text, feedback };
+                        }
+                        else {
+                            return null;
+                        }
+                    })
+                        .filter((x) => x !== null),
+                    summary: parsed,
+                });
+            }
+            catch (e) { /* 保存失敗時は無視 */ }
         }
         catch (e) {
-            setSummaryData({ error: 'AIサマリー生成のパースに失敗: ' + (res || '') });
+            setSummaryData({ error: 'AIサマリー生成のパースに失敗: ' + (res || '') + '\nAI応答のJSONに不備がある可能性があります。AIプロンプトやAI応答内容を見直してください。' });
         }
         setSummaryLoading(false);
         setPage('summary');

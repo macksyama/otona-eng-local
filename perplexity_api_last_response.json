@@ -1,15 +1,19 @@
 {
-  "id": "86cac9c3-5802-427f-b606-47d0b1c5eab8",
+  "id": "abf7c137-431a-445b-a3e5-1dedc4331819",
   "model": "sonar",
-  "created": 1745213789,
+  "created": 1745215025,
   "usage": {
-    "prompt_tokens": 6041,
-    "completion_tokens": 264,
-    "total_tokens": 6305,
+    "prompt_tokens": 1775,
+    "completion_tokens": 136,
+    "total_tokens": 1911,
     "search_context_size": "low"
   },
   "citations": [
-    "https://www.politico.com/news/2025/04/18/trump-ukraine-russia-war-00298898"
+    "https://dl3.languagecentre.ir/vocabulary/English%20Vocabulary%20in%20Use%20Upper-Intermediate%204th%20Edition%20%5Bwww.languagecentre.ir%5D.pdf",
+    "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary",
+    "https://www.cambridge.org/us/cambridgeenglish/catalog/grammar-vocabulary-and-pronunciation/english-vocabulary-use-upper-intermediate-4th-edition",
+    "https://www.esl-lounge.com/student/reference/b2-cefr-vocabulary-word-list.php",
+    "https://dictionary.cambridge.org/us/shop/vocabulary/upper-intermediate"
   ],
   "object": "chat.completion",
   "choices": [
@@ -18,7 +22,7 @@
       "finish_reason": "stop",
       "message": {
         "role": "assistant",
-        "content": "```json\n{\n  \"vocab_phrases\": [\n    {\"word\": \"take a pass\", \"meaning\": \"参加しない\"},\n    {\"word\": \"broker a deal\", \"meaning\": \"取引を仲介する\"},\n    {\"word\": \"ceasefire\", \"meaning\": \"停戦\"},\n    {\"word\": \"endeavour\", \"meaning\": \"努力\"},\n    {\"word\": \"security guarantees\", \"meaning\": \"安全保障\"}\n  ],\n  \"praise\": \"記事の要約では主要な発言者（トランプ・ルビオ）を明確に特定できています。質問に対し記事内容を参照しようとする姿勢が見られます。\",\n  \"improvement\": \"質問の焦点（モスクワの停戦条件など）を正確に捉えていない場合がありました。語彙問題では単語を独立して使う練習が不足していました。\",\n  \"advice\": \"記事要約では因果関係を明確にし、質問文のキーワード（例: 'conditions'）を意識的に含めましょう。単語問題では文脈を自分で作る練習が必要です。\"\n}\n```"
+        "content": "{\"summary\": {\"question\": \"この記事を要約してください。\"}, \"vocab\": [{\"word\": \"reprimand\", \"task\": \"Compose a sentence using the word 'reprimand'.\"}, {\"word\": \"accountability\", \"task\": \"Compose a sentence using the word 'accountability'.\"}], \"comprehension\": [{\"question\": \"What were the reasons given by the IDF for the killing of the medics in Gaza?\"}, {\"question\": \"How did international organizations react to the IDF's report on the incident?\"}], \"discussion\": {\"point\": \"Discuss the need for accountability in military conflicts to prevent future civilian casualties.\"}}"
       },
       "delta": {
         "role": "assistant",

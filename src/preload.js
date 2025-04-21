@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ipcRenderer: {
     invoke: (...args) => ipcRenderer.invoke(...args),
     on: (...args) => ipcRenderer.on(...args),
-  }
+  },
+  shellOpenExternal: (url) => ipcRenderer.invoke('shell-open-external', url),
 }); 

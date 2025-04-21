@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
@@ -184,6 +184,10 @@ ipcMain.handle('set-api-type', (event, type) => {
 });
 ipcMain.handle('ask-ai', async (event, question: string) => {
   return await askAI(question);
+});
+// 外部リンクを開くIPC
+ipcMain.handle('shell-open-external', (event, url: string) => {
+  return shell.openExternal(url);
 });
 // Perplexity APIの直近レスポンスを返すIPC
 ipcMain.handle('get-last-perplexity-response', async () => {

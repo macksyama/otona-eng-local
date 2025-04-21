@@ -188,6 +188,10 @@ electron_1.ipcMain.handle('set-api-type', (event, type) => {
 electron_1.ipcMain.handle('ask-ai', async (event, question) => {
     return await askAI(question);
 });
+// 外部リンクを開くIPC
+electron_1.ipcMain.handle('shell-open-external', (event, url) => {
+    return electron_1.shell.openExternal(url);
+});
 // Perplexity APIの直近レスポンスを返すIPC
 electron_1.ipcMain.handle('get-last-perplexity-response', async () => {
     try {

@@ -158,7 +158,7 @@ const Summary: React.FC<Props> = ({ setPage, summaryData }) => {
         <h3 className="font-bold mb-1">アドバイス</h3>
         <p className="bg-blue-50 border-l-4 border-blue-400 p-2 rounded text-blue-800 whitespace-pre-line">{advice}</p>
       </div>
-      <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setPage('home')}>
+      <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setPage('news')}>
         ホームへ戻る
       </button>
     </div>

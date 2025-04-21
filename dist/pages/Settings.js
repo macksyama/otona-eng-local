@@ -22,6 +22,6 @@ const Settings = () => {
             ipcRenderer.invoke('set-api-type', value);
         }
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { style: { padding: 24 }, children: [(0, jsx_runtime_1.jsx)("h2", { children: "API\u8A2D\u5B9A" }), (0, jsx_runtime_1.jsx)("div", { children: API_TYPES.map((type) => ((0, jsx_runtime_1.jsxs)("label", { style: { marginRight: 16 }, children: [(0, jsx_runtime_1.jsx)("input", { type: "radio", name: "apiType", value: type.value, checked: apiType === type.value, onChange: handleChange }), type.label] }, type.value))) })] }));
+    return ((0, jsx_runtime_1.jsxs)("div", { style: { padding: 24, paddingTop: 72 }, children: [(0, jsx_runtime_1.jsx)("h2", { children: "API\u8A2D\u5B9A" }), (0, jsx_runtime_1.jsx)("div", { children: API_TYPES.map((type) => ((0, jsx_runtime_1.jsxs)("label", { style: { marginRight: 16 }, children: [(0, jsx_runtime_1.jsx)("input", { type: "radio", name: "apiType", value: type.value, checked: apiType === type.value, onChange: handleChange }), type.label] }, type.value))) })] }));
 };
 exports.default = Settings;

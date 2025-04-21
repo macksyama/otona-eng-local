@@ -26,7 +26,7 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: 24, paddingTop: 72 }}>
       <h2>API設定</h2>
       <div>
         {API_TYPES.map((type) => (

@@ -1,19 +1,16 @@
 {
-  "id": "3af2b304-a47e-4638-83cb-c632452eab34",
+  "id": "a0617a59-b8fb-47f2-a201-c4be1a0c4568",
   "model": "sonar",
-  "created": 1745215455,
+  "created": 1745215825,
   "usage": {
-    "prompt_tokens": 1170,
-    "completion_tokens": 150,
-    "total_tokens": 1320,
+    "prompt_tokens": 2545,
+    "completion_tokens": 329,
+    "total_tokens": 2874,
     "search_context_size": "low"
   },
   "citations": [
-    "https://www.english.upenn.edu/graduate/resources/teachweb/kmgrades.html",
-    "https://human.libretexts.org/Bookshelves/Composition/Introductory_Composition/Remix:_Expression_and_Inquiry_(Manning_et_al.)/01:_PART_I/01:_Part_I_Overview-_The_Writing_Process/1.03:_Five_Evaluation_Criteria",
-    "https://open.maricopa.edu/english101open/chapter/evaluation-essays/",
-    "https://gallaudet.edu/student-success/tutorial-center/english-center/writing/evaluation-checklist-for-essay-writing/",
-    "https://eclexam.eu/criteria-for-assessing-writing/"
+    "https://www.france24.com/en/live-news/20250420-el-salvador-s-president-proposes-prisoner-exchange-with-venezuela",
+    "https://www.ksl.com/article/51298206/el-salvador-proposes-sending-us-deported-venezuelans-to-venezuela"
   ],
   "object": "chat.completion",
   "choices": [
@@ -22,7 +19,7 @@
       "finish_reason": "stop",
       "message": {
         "role": "assistant",
-        "content": "{\n  \"score\": 3,\n  \"mistakes\": \"The sentence does not use the word 'ceasefire' as requested and instead uses the synonym 'Easter truce'. It also simply repeats information from the article rather than creating an original sentence.\",\n  \"advice\": \"Use the given word 'ceasefire' directly in your own sentence to demonstrate understanding and proper use. Try to create a short, original sentence that clearly shows the meaning of 'ceasefire'.\",\n  \"correction\": \"A better sentence would be: 'The ceasefire between the two countries was broken when drone attacks resumed.'\",\n  \"model_answer\": \"The ceasefire declared by Moscow lasted only 30 hours before attacks started again.\"\n}"
+        "content": "{\n  \"vocab_phrases\": [\n    {\"word\": \"repatriate\", \"meaning\": \"本国に送還する\"},\n    {\"word\": \"deported\", \"meaning\": \"国外追放された\"},\n    {\"word\": \"political prisoners\", \"meaning\": \"政治犯\"},\n    {\"word\": \"prisoner exchange\", \"meaning\": \"囚人交換\"},\n    {\"word\": \"humanitarian agreement\", \"meaning\": \"人道的合意\"}\n  ],\n  \"praise\": \"ユーザーは記事の内容に関して要点を捉えようとしており、特に登場人物や事件の大まかな流れについて理解を示しています。単語を使った文章作成にも取り組んでおり、アウトプットの意欲が感じられました。\",\n  \"improvement\": \"ただし、要約は重要な数字や背景、具体的な提案内容が不足しており、質問に対する答えも簡潔すぎたり、質問の意図から外れた回答が見られました。語彙の使い方についても、指定された単語を文中で適切に使う練習が必要です。\",\n  \"advice\": \"今後は記事の主な事実と背景をしっかり押さえ、質問に対して的確かつ具体的に答える練習を続けましょう。語彙の使い方も例文を真似するなどして、文章の中で自然に表現できるようにすると良いです。\"\n}"
       },
       "delta": {
         "role": "assistant",

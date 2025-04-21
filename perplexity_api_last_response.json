@@ -1,19 +1,19 @@
 {
-  "id": "abf7c137-431a-445b-a3e5-1dedc4331819",
+  "id": "3af2b304-a47e-4638-83cb-c632452eab34",
   "model": "sonar",
-  "created": 1745215025,
+  "created": 1745215455,
   "usage": {
-    "prompt_tokens": 1775,
-    "completion_tokens": 136,
-    "total_tokens": 1911,
+    "prompt_tokens": 1170,
+    "completion_tokens": 150,
+    "total_tokens": 1320,
     "search_context_size": "low"
   },
   "citations": [
-    "https://dl3.languagecentre.ir/vocabulary/English%20Vocabulary%20in%20Use%20Upper-Intermediate%204th%20Edition%20%5Bwww.languagecentre.ir%5D.pdf",
-    "https://learnenglish.britishcouncil.org/vocabulary/b1-b2-vocabulary",
-    "https://www.cambridge.org/us/cambridgeenglish/catalog/grammar-vocabulary-and-pronunciation/english-vocabulary-use-upper-intermediate-4th-edition",
-    "https://www.esl-lounge.com/student/reference/b2-cefr-vocabulary-word-list.php",
-    "https://dictionary.cambridge.org/us/shop/vocabulary/upper-intermediate"
+    "https://www.english.upenn.edu/graduate/resources/teachweb/kmgrades.html",
+    "https://human.libretexts.org/Bookshelves/Composition/Introductory_Composition/Remix:_Expression_and_Inquiry_(Manning_et_al.)/01:_PART_I/01:_Part_I_Overview-_The_Writing_Process/1.03:_Five_Evaluation_Criteria",
+    "https://open.maricopa.edu/english101open/chapter/evaluation-essays/",
+    "https://gallaudet.edu/student-success/tutorial-center/english-center/writing/evaluation-checklist-for-essay-writing/",
+    "https://eclexam.eu/criteria-for-assessing-writing/"
   ],
   "object": "chat.completion",
   "choices": [
@@ -22,7 +22,7 @@
       "finish_reason": "stop",
       "message": {
         "role": "assistant",
-        "content": "{\"summary\": {\"question\": \"この記事を要約してください。\"}, \"vocab\": [{\"word\": \"reprimand\", \"task\": \"Compose a sentence using the word 'reprimand'.\"}, {\"word\": \"accountability\", \"task\": \"Compose a sentence using the word 'accountability'.\"}], \"comprehension\": [{\"question\": \"What were the reasons given by the IDF for the killing of the medics in Gaza?\"}, {\"question\": \"How did international organizations react to the IDF's report on the incident?\"}], \"discussion\": {\"point\": \"Discuss the need for accountability in military conflicts to prevent future civilian casualties.\"}}"
+        "content": "{\n  \"score\": 3,\n  \"mistakes\": \"The sentence does not use the word 'ceasefire' as requested and instead uses the synonym 'Easter truce'. It also simply repeats information from the article rather than creating an original sentence.\",\n  \"advice\": \"Use the given word 'ceasefire' directly in your own sentence to demonstrate understanding and proper use. Try to create a short, original sentence that clearly shows the meaning of 'ceasefire'.\",\n  \"correction\": \"A better sentence would be: 'The ceasefire between the two countries was broken when drone attacks resumed.'\",\n  \"model_answer\": \"The ceasefire declared by Moscow lasted only 30 hours before attacks started again.\"\n}"
       },
       "delta": {
         "role": "assistant",

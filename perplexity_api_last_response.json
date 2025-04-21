@@ -1,16 +1,19 @@
 {
-  "id": "a0617a59-b8fb-47f2-a201-c4be1a0c4568",
+  "id": "b515cbab-5e09-4d63-a317-fada17035270",
   "model": "sonar",
-  "created": 1745215825,
+  "created": 1745218471,
   "usage": {
-    "prompt_tokens": 2545,
-    "completion_tokens": 329,
-    "total_tokens": 2874,
+    "prompt_tokens": 353,
+    "completion_tokens": 210,
+    "total_tokens": 563,
     "search_context_size": "low"
   },
   "citations": [
-    "https://www.france24.com/en/live-news/20250420-el-salvador-s-president-proposes-prisoner-exchange-with-venezuela",
-    "https://www.ksl.com/article/51298206/el-salvador-proposes-sending-us-deported-venezuelans-to-venezuela"
+    "https://ucincinnatipress.pressbooks.pub/xiao1071/chapter/evaluating-a-summary/",
+    "https://www.trentu.ca/academicskills/how-guides/how-write-university/how-approach-any-assignment/writing-article-summaries",
+    "https://www.kaggle.com/competitions/commonlit-evaluate-student-summaries",
+    "https://undergradcollege.utexas.edu/first-year-experience/signature-courses/faculty-resources/essential-element-writing/analytic-rubric/holistic-scale-grading-article-summaries",
+    "https://newsela.com/blog/read/teach-summarizing"
   ],
   "object": "chat.completion",
   "choices": [
@@ -19,7 +22,7 @@
       "finish_reason": "stop",
       "message": {
         "role": "assistant",
-        "content": "{\n  \"vocab_phrases\": [\n    {\"word\": \"repatriate\", \"meaning\": \"本国に送還する\"},\n    {\"word\": \"deported\", \"meaning\": \"国外追放された\"},\n    {\"word\": \"political prisoners\", \"meaning\": \"政治犯\"},\n    {\"word\": \"prisoner exchange\", \"meaning\": \"囚人交換\"},\n    {\"word\": \"humanitarian agreement\", \"meaning\": \"人道的合意\"}\n  ],\n  \"praise\": \"ユーザーは記事の内容に関して要点を捉えようとしており、特に登場人物や事件の大まかな流れについて理解を示しています。単語を使った文章作成にも取り組んでおり、アウトプットの意欲が感じられました。\",\n  \"improvement\": \"ただし、要約は重要な数字や背景、具体的な提案内容が不足しており、質問に対する答えも簡潔すぎたり、質問の意図から外れた回答が見られました。語彙の使い方についても、指定された単語を文中で適切に使う練習が必要です。\",\n  \"advice\": \"今後は記事の主な事実と背景をしっかり押さえ、質問に対して的確かつ具体的に答える練習を続けましょう。語彙の使い方も例文を真似するなどして、文章の中で自然に表現できるようにすると良いです。\"\n}"
+        "content": "{\"score\": 7, \"mistakes\": \"The summary missed important details such as the specific statements from the Chinese commerce ministry spokesperson and the broader context of tariff conflicts. It also lacks clarity and completeness.\", \"advice\": \"Try to include key quotes or paraphrased statements from the article to support the main idea. Additionally, provide a clearer overview of the article's major points.\", \"correction\": \"A more complete summary would include specific details from the article, such as the spokesperson's comments on reciprocity and the mention of tariffs.\", \"model_answer\": \"China has warned it will counter countries that form deals with the US detrimental to Beijing's interests. A Chinese commerce ministry spokesperson stated that China opposes any agreements harming its interests and will take reciprocal measures if necessary. The warning comes amid ongoing tariff disputes, with duties on Chinese goods reaching 145 percent and retaliatory tariffs on US products at 125 percent. The spokesperson emphasized that China will not accept appeasement and will stand firm against trade deals undermining its economic interests.\"}"
       },
       "delta": {
         "role": "assistant",

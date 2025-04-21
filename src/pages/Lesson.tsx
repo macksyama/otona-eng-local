@@ -41,6 +41,25 @@ function buildSummaryPrompt(article: string, chat: ChatMessage[]) {
   return `#Order\nYou are an English teacher. Please summarize the following English lesson for the student.\n\n#Input\n- Article: ${article}\n- Lesson log:\n${log}\n\n#Task\n- Output a summary of the lesson in JSON ONLY (no explanation, no code block, no extra text).\n- The JSON must include the following fields:\n  1. \"vocab_phrases\": 学んだキーワード・フレーズ5つ（英語＋日本語訳、必ず5つ返す）例: [{\"word\": \"broker a deal\", \"meaning\": \"取引をまとめる\"}, ...]\n  2. \"praise\": ユーザーの回答で良かった点（日本語で2-3文）\n  3. \"improvement\": もっと頑張るべき点（日本語で2-3文）\n  4. \"advice\": 建設的なアドバイス（日本語で1-2文）\n\n#Output format (STRICTLY JSON ONLY, NO explanation, NO code block, NO extra text. Output ONLY valid JSON object!):\n{\n  \"vocab_phrases\": [\n    {\"word\": \"broker a deal\", \"meaning\": \"取引をまとめる\"},\n    ...\n  ],\n  \"praise\": \"...\",\n  \"improvement\": \"...\",\n  \"advice\": \"...\"\n}\n`;
 }
 
+// 先生アイコン（リアル写真・相対パス）
+const TeacherIcon = (
+  <img
+    src="./teacher-avatar.png"
+    alt="Teacher"
+    className="w-10 h-10 rounded-full object-cover border border-blue-200 bg-white"
+    draggable={false}
+  />
+);
+// ユーザーアイコン（user.png画像）
+const UserIcon = (
+  <img
+    src="./user.png"
+    alt="User"
+    className="w-10 h-10 rounded-full object-cover border border-gray-300 bg-white"
+    draggable={false}
+  />
+);
+
 const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
   const [step, setStep] = useState(0); // 現在の設問インデックス
   const [input, setInput] = useState('');
@@ -625,24 +644,39 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
           {chat.map((msg, i) => (
             <div key={i} className="mb-2">
               {msg.role === 'ai' && (
-                <div className="text-blue-700 font-bold">AI: {msg.text}</div>
+                <div className="flex items-start">
+                  <div className="mr-2 flex-shrink-0">{TeacherIcon}</div>
+                  <div className="bg-white rounded-lg px-4 py-2 shadow text-blue-700 font-bold max-w-[70%]">
+                    AI: {msg.text}
+                  </div>
+                </div>
               )}
               {msg.role === 'user' && (
-                <div className="text-right text-gray-800">あなた: {msg.text}</div>
+                <div className="flex items-start justify-end">
+                  <div className="bg-blue-600 text-white rounded-lg px-4 py-2 shadow max-w-[70%] text-right">
+                    あなた: {msg.text}
+                  </div>
+                  <div className="ml-2 flex-shrink-0">{UserIcon}</div>
+                </div>
               )}
               {msg.role === 'ai-feedback' && (
-                // エラー文の場合はそのまま表示
-                typeof msg.score === 'number' && (msg.modelAnswer !== undefined || msg.mistakes !== undefined || msg.correction !== undefined || msg.advice !== undefined) && !msg.text?.startsWith('AI応答の解析に失敗しました') ? (
-                  <div className="text-green-700">
-                    <div><b>スコア:</b> {msg.score}点</div>
-                    {(msg.mistakes ?? '') !== '' && <div><b>間違い:</b> {msg.mistakes}</div>}
-                    {(msg.correction ?? '') !== '' && <div><b>修正例:</b> {msg.correction}</div>}
-                    {(msg.advice ?? '') !== '' && <div><b>アドバイス:</b> {msg.advice}</div>}
-                    {(msg.modelAnswer ?? '') !== '' && <div><b>模範解答:</b> {msg.modelAnswer}</div>}
+                <div className="flex items-start">
+                  <div className="mr-2 flex-shrink-0">{TeacherIcon}</div>
+                  <div className="bg-green-50 rounded-lg px-4 py-2 shadow text-green-700 max-w-[70%]">
+                    {/* エラー文の場合はそのまま表示 */}
+                    {typeof msg.score === 'number' && (msg.modelAnswer !== undefined || msg.mistakes !== undefined || msg.correction !== undefined || msg.advice !== undefined) && !msg.text?.startsWith('AI応答の解析に失敗しました') ? (
+                      <div>
+                        <div><b>スコア:</b> {msg.score}点</div>
+                        {(msg.mistakes ?? '') !== '' && <div><b>間違い:</b> {msg.mistakes}</div>}
+                        {(msg.correction ?? '') !== '' && <div><b>修正例:</b> {msg.correction}</div>}
+                        {(msg.advice ?? '') !== '' && <div><b>アドバイス:</b> {msg.advice}</div>}
+                        {(msg.modelAnswer ?? '') !== '' && <div><b>模範解答:</b> {msg.modelAnswer}</div>}
+                      </div>
+                    ) : (
+                      <div>AI評価: {msg.text} <span className="ml-2 font-bold">+{msg.score}点</span></div>
+                    )}
                   </div>
-                ) : (
-                  <div className="text-green-700">AI評価: {msg.text} <span className="ml-2 font-bold">+{msg.score}点</span></div>
-                )
+                </div>
               )}
             </div>
           ))}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Home from './Home';
 import Lesson from './Lesson';
 import Summary from './Summary';
@@ -13,6 +13,15 @@ const App: React.FC = () => {
   const [page, setPage] = useState<Page>('news');
   const [article, setArticle] = useState<string>('');
   const [summaryData, setSummaryData] = useState<any>(null);
+  const prevPage = useRef<Page>('news');
+
+  // ページ遷移時に直前のページを記憶
+  const handleSetPage = (next: Page) => {
+    if (next === 'settings') {
+      prevPage.current = page;
+    }
+    setPage(next);
+  };
 
   // Heroicons Cog8Tooth outline（中央がずれない）
   const GearIcon = (
@@ -26,7 +35,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-50 relative">
       {/* 右上に歯車アイコン */}
       <button
-        onClick={() => setPage('settings')}
+        onClick={() => handleSetPage('settings')}
         style={{ position: 'absolute', top: 16, right: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
         aria-label="設定"
       >
@@ -36,7 +45,7 @@ const App: React.FC = () => {
         <div>
           <Settings />
           <button
-            onClick={() => setPage('home')}
+            onClick={() => setPage(prevPage.current)}
             style={{ position: 'absolute', top: 16, left: 24, background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, zIndex: 10 }}
           >
             ← 戻る
@@ -44,11 +53,11 @@ const App: React.FC = () => {
         </div>
       ) : (
         <>
-          {page === 'news' && <NewsList onSelect={() => setPage('home')} />}
-          {page === 'home' && <Home setPage={setPage} setArticle={setArticle} />}
-          {page === 'lesson' && <Lesson article={article} setPage={setPage} setSummaryData={setSummaryData} />}
-          {page === 'summary' && <Summary setPage={setPage} summaryData={summaryData} />}
-          {page === 'history' && <HistoryList setPage={setPage} />}
+          {page === 'news' && <NewsList onSelect={() => handleSetPage('home')} />}
+          {page === 'home' && <Home setPage={handleSetPage} setArticle={setArticle} />}
+          {page === 'lesson' && <Lesson article={article} setPage={handleSetPage} setSummaryData={setSummaryData} />}
+          {page === 'summary' && <Summary setPage={handleSetPage} summaryData={summaryData} />}
+          {page === 'history' && <HistoryList setPage={handleSetPage} />}
         </>
       )}
     </div>

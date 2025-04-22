@@ -199,7 +199,10 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
 
   // 設問の合計数を計算
   const totalQuestions = questions
-    ? 1 + questions.vocab.length + questions.comprehension.length + 1 // summary+vocab+comprehension+discussion
+    ? 1
+      + (Array.isArray(questions.vocab) ? questions.vocab.length : 0)
+      + (Array.isArray(questions.comprehension) ? questions.comprehension.length : 0)
+      + 1 // summary+vocab+comprehension+discussion
     : 0;
 
   // 現在の設問内容を取得
@@ -210,22 +213,22 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
         type: 'summary',
         text: questions.summary.question,
       };
-    } else if (step === 1 && questions.vocab && questions.vocab[0] && questions.vocab[0].word) {
+    } else if (step === 1 && Array.isArray(questions.vocab) && questions.vocab[0] && questions.vocab[0].word) {
       currentQuestion = {
         type: 'vocab',
         text: `記事に出てきた「${questions.vocab[0].word}」を使って短文を作ってください。`,
       };
-    } else if (step === 2 && questions.vocab && questions.vocab[1] && questions.vocab[1].word) {
+    } else if (step === 2 && Array.isArray(questions.vocab) && questions.vocab[1] && questions.vocab[1].word) {
       currentQuestion = {
         type: 'vocab',
         text: `記事に出てきた「${questions.vocab[1].word}」を使って短文を作ってください。`,
       };
-    } else if (step === 3 && questions.comprehension && questions.comprehension[0] && questions.comprehension[0].question) {
+    } else if (step === 3 && Array.isArray(questions.comprehension) && questions.comprehension[0] && questions.comprehension[0].question) {
       currentQuestion = {
         type: 'comprehension',
         text: questions.comprehension[0].question,
       };
-    } else if (step === 4 && questions.comprehension && questions.comprehension[1] && questions.comprehension[1].question) {
+    } else if (step === 4 && Array.isArray(questions.comprehension) && questions.comprehension[1] && questions.comprehension[1].question) {
       currentQuestion = {
         type: 'comprehension',
         text: questions.comprehension[1].question,

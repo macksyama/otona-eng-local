@@ -5,6 +5,7 @@ import Summary from './Summary';
 import Settings from './Settings';
 import NewsList from './NewsList';
 import HistoryList from './HistoryList';
+import Login from './Login';
 
 // 画面遷移用の状態
 export type Page = 'news' | 'home' | 'lesson' | 'summary' | 'settings' | 'history';
@@ -14,6 +15,7 @@ const App: React.FC = () => {
   const [article, setArticle] = useState<string>('');
   const [summaryData, setSummaryData] = useState<any>(null);
   const prevPage = useRef<Page>('news');
+  const [authed, setAuthed] = useState(() => localStorage.getItem('otona-auth') === '1');
 
   // ページ遷移時に直前のページを記憶
   const handleSetPage = (next: Page) => {
@@ -21,6 +23,15 @@ const App: React.FC = () => {
       prevPage.current = page;
     }
     setPage(next);
+  };
+
+  if (!authed) {
+    return <Login onLogin={() => setAuthed(true)} />;
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('otona-auth');
+    setAuthed(false);
   };
 
   // Heroicons Cog8Tooth outline（中央がずれない）
@@ -31,15 +42,31 @@ const App: React.FC = () => {
     </svg>
   );
 
+  // Heroicons ArrowRightOnRectangle（ログアウトアイコン）
+  const LogoutIcon = (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" width="32" height="32">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M18 12H9m0 0l3-3m-3 3l3 3" />
+    </svg>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 relative">
       {/* 右上に歯車アイコン */}
       <button
         onClick={() => handleSetPage('settings')}
-        style={{ position: 'absolute', top: 16, right: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+        style={{ position: 'absolute', top: 16, right: 48, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
         aria-label="設定"
       >
         {GearIcon}
+      </button>
+      {/* ログアウトアイコンボタン */}
+      <button
+        onClick={handleLogout}
+        style={{ position: 'absolute', top: 16, right: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#f00' }}
+        aria-label="ログアウト"
+      >
+        {LogoutIcon}
       </button>
       {page === 'settings' ? (
         <div>

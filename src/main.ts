@@ -201,4 +201,8 @@ ipcMain.handle('get-last-perplexity-response', async () => {
   } catch (e) {
     return '';
   }
-}); 
+});
+
+// PWA対応: service-worker.jsをpublicに配置すること
+// VercelやNetlifyではpublic配下がそのまま公開されるため、src/service-worker.jsをpublic/service-worker.jsにコピーしてください
+// 例: cp src/service-worker.js public/service-worker.js 

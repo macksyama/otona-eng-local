@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Page } from './App';
 import Summary from './Summary';
 import { saveLessonHistory } from './history';
+import { jsonrepair } from 'jsonrepair';
 
 const ipcRenderer = window.electronAPI?.ipcRenderer;
 
@@ -63,12 +64,49 @@ const UserIcon = (
 
 // AIリクエスト共通関数
 async function askAIWeb(prompt: string): Promise<any> {
-  const res = await fetch('/api/ask-ai', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: prompt, type: 'perplexity' })
-  });
-  return await res.json();
+  try {
+    const res = await fetch('/api/ask-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: prompt, type: 'perplexity' })
+    });
+    const data = await res.json();
+    console.log('askAIWeb fetch response:', data);
+    return data;
+  } catch (e) {
+    console.error('askAIWeb fetch error:', e);
+    return null;
+  }
+}
+
+// AI応答パース共通関数
+function parseAIResponse(raw: any): any {
+  try {
+    const msg = raw?.choices?.[0]?.message;
+    if (!msg) return { error: 'AI応答のmessageが空', raw };
+    const content = msg.content;
+    if (typeof content === 'object' && content !== null) return content;
+    if (typeof content === 'string') {
+      // 1. そのままJSON.parse
+      try {
+        return JSON.parse(content);
+      } catch (e1) {
+        // 2. 最初のJSONブロックだけ抽出してJSON.parse
+        const firstJson = content.match(/\{[\s\S]*\}/);
+        if (firstJson) {
+          try {
+            return JSON.parse(firstJson[0]);
+          } catch (e2) {
+            return { error: 'AI応答のJSONブロックパースに失敗', raw: content, hint: e2 instanceof Error ? e2.message : String(e2) };
+          }
+        }
+        return { error: 'AI応答のJSONパースに失敗', raw: content, hint: e1 instanceof Error ? e1.message : String(e1) };
+      }
+    }
+    return { error: 'AI応答のパースに失敗', raw };
+  } catch (e) {
+    return { error: 'AI応答のパースに失敗', raw, hint: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
@@ -92,9 +130,7 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
       setLoading(true);
       setError(null);
       const prompt = buildAllQuestionsPrompt(article);
-      const res = ipcRenderer
-        ? await ipcRenderer.invoke('ask-ai', prompt)
-        : await askAIWeb(prompt);
+      const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', prompt) : await askAIWeb(prompt);
       let content = '';
       let parsed: any = null;
       try {
@@ -106,16 +142,15 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
           // 2. これまで通りchoices[0].message.contentから抽出
           console.log('設問生成AI応答 message:', JSON.stringify(resObj?.choices?.[0]?.message));
           content = resObj?.choices?.[0]?.message?.content || '';
-          console.log('設問生成AI応答 content:', content);
-          const jsonMatches = content.match(/\{[\s\S]*?\}/g);
-          if (jsonMatches) {
-            for (const jsonStr of jsonMatches) {
-              try {
-                parsed = JSON.parse(jsonStr);
-                if (parsed && parsed.vocab && parsed.comprehension && parsed.discussion) break;
-              } catch {}
+          // contentがJSON文字列ならさらにパース
+          try {
+            if (typeof content === 'string' && content.trim().startsWith('{')) {
+              const parsedContent = JSON.parse(content);
+              if (parsedContent && parsedContent.vocab && parsedContent.comprehension && parsedContent.discussion) {
+                parsed = parsedContent;
+              }
             }
-          }
+          } catch {}
           if (!parsed || Object.keys(parsed).length === 0) {
             // パース失敗時もRawデータをconsole.logし、再度JSON抽出を試みる
             console.log('設問生成AI応答Raw:', content);
@@ -259,7 +294,7 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
         setDiscussionHistory(h => ({ ...h, user1: input }));
         // 深掘りプロンプト生成
         const followPrompt = `#Order\nYou are an English teacher. Based on the following student's discussion answer, ask a follow-up question to deepen the discussion.\nIf the answer is too short or vague, still ask a relevant open-ended follow-up question to encourage more explanation.\nAlways return exactly one English question.\n\n#Output format (STRICTLY JSON ONLY, NO explanation, NO code block, NO extra text. Output ONLY valid JSON object!):\n{\n  \"followup\": \"（英語の深掘り質問文）\"\n}\n\n#Input\nArticle: ${article}\nDiscussion point: ${questions.discussion.point}\nStudent answer: ${input}\n#Output`;
-        const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', followPrompt) : null;
+        const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', followPrompt) : await askAIWeb(followPrompt);
         let followContent = '';
         let rawContent = '';
         try {
@@ -350,72 +385,10 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
     // 送信プロンプトを自動で確認
     console.log('送信プロンプト:', evalPrompt);
     // AI評価リクエスト
-    const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', evalPrompt) : null;
-    let content = '';
-    let lastRawContent = '';
+    const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', evalPrompt) : await askAIWeb(evalPrompt);
     let parsed: any = null;
     try {
-      let match = typeof res === 'string' ? res.match(/\{[\s\S]*\}/) : null;
-      let jsonStr = match ? match[0] : res;
-      // バッククォートや```json, ```を除去
-      if (typeof jsonStr === 'string') {
-        jsonStr = jsonStr.replace(/```json[\s\S]*?```/g, '').replace(/```[\s\S]*?```/g, '').trim();
-        // 先頭・末尾のバッククォートや改行も除去
-        jsonStr = jsonStr.replace(/^`+|`+$/g, '').trim();
-        // 末尾カンマを自動除去
-        jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-        // 最初のJSONブロックのみ抽出
-        const firstJson = jsonStr.match(/\{[\s\S]*\}/);
-        if (firstJson) jsonStr = firstJson[0];
-      }
-      parsed = JSON.parse(jsonStr);
-      // messageオブジェクトの詳細を出力
-      console.log('AI評価APIレスポンス全体:', JSON.stringify(parsed));
-      // 1. 直接評価JSONの場合
-      if (parsed && typeof parsed === 'object' && 'score' in parsed) {
-        // ...既存の処理...
-      } else {
-        // 2. これまで通りchoices[0].message.contentから抽出
-        console.log('AI評価応答 message:', JSON.stringify(parsed?.choices?.[0]?.message));
-        content = parsed?.choices?.[0]?.message?.content || '';
-        lastRawContent = content;
-        console.log('AI評価応答 content:', content);
-        // コードブロックや説明文付きのAI応答にも対応
-        let jsonStr = '';
-        // 1. ```json ... ``` 形式
-        let codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-        if (codeBlockMatch) {
-          jsonStr = codeBlockMatch[1].trim();
-        } else {
-          // 2. ``` ... ``` 形式
-          codeBlockMatch = content.match(/```\s*([\s\S]*?)\s*```/);
-          if (codeBlockMatch) {
-            jsonStr = codeBlockMatch[1].trim();
-          } else if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
-            // 3. 純粋なJSONのみの場合
-            jsonStr = content.trim();
-          } else {
-            // 4. 本文中の最初のJSONブロック
-            const jsonMatches = content.match(/\{[\s\S]*?\}/g);
-            if (jsonMatches) {
-              jsonStr = jsonMatches[0];
-            }
-          }
-        }
-        if (jsonStr) {
-          try {
-            parsed = JSON.parse(jsonStr);
-          } catch (e) {
-            setError('AI応答のJSONパースに失敗しました。\nRaw content: ' + content + '\nError: ' + e + '\nAPIレスポンス全体: ' + JSON.stringify(parsed));
-            setLoading(false);
-            return;
-          }
-        } else {
-          setError('AI応答のJSON抽出に失敗しました。\nRaw content: ' + content + '\nAPIレスポンス全体: ' + JSON.stringify(parsed));
-          setLoading(false);
-          return;
-        }
-      }
+      parsed = parseAIResponse(res);
     } catch (e) {
       console.log('AI評価レスポンスのパースに失敗:', res);
     }
@@ -423,7 +396,7 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
     let modelAnswer = '';
     let feedbackText = '';
     try {
-      if (!parsed || Object.keys(parsed).length === 0) {
+      if (!parsed || Object.keys(parsed).length === 0 || parsed.error) {
         // パース失敗時はperplexity_api_last_response.jsonのchoices[0].message.contentを自動で再パース
         if (ipcRenderer) {
           await ipcRenderer.invoke('get-last-perplexity-response').then((fileContent: string) => {
@@ -431,73 +404,48 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
             let alreadySet = false;
             try {
               const obj = JSON.parse(fileContent);
-              const contentStr = obj.choices?.[0]?.message?.content;
-              rawInfo = contentStr || '';
-              let jsonStr = contentStr;
-              // 1. ```json ... ``` 形式
-              let codeBlockMatch = contentStr.match(/```json\s*([\s\S]*?)\s*```/);
-              if (codeBlockMatch) {
-                jsonStr = codeBlockMatch[1].trim();
-              } else {
-                // 2. ``` ... ``` 形式
-                codeBlockMatch = contentStr.match(/```\s*([\s\S]*?)\s*```/);
-                if (codeBlockMatch) {
-                  jsonStr = codeBlockMatch[1].trim();
-                } else if (contentStr.trim().startsWith('{') && contentStr.trim().endsWith('}')) {
-                  // 3. 純粋なJSONのみの場合
-                  jsonStr = contentStr.trim();
-                } else {
-                  // 4. 本文中の最初のJSONブロック
-                  const jsonMatches = contentStr.match(/\{[\s\S]*?\}/g);
-                  if (jsonMatches) {
-                    jsonStr = jsonMatches[0];
-                  }
-                }
-              }
-              if (jsonStr) {
-                const recovered = JSON.parse(jsonStr);
-                if (recovered && recovered.score !== undefined) {
-                  score = typeof recovered.score === 'number' ? recovered.score : Number(recovered.score) || 0;
-                  modelAnswer = recovered.model_answer || '';
-                  feedbackText = `スコア: ${score}\n間違い: ${recovered.mistakes || ''}\n修正例: ${recovered.correction || ''}\nアドバイス: ${recovered.advice || ''}\n模範解答: ${modelAnswer}`;
-                  setChat(prev => [...prev, {
-                    role: 'ai-feedback',
-                    text: feedbackText,
-                    score,
-                    modelAnswer: parsed && parsed.model_answer ? parsed.model_answer : '',
-                    mistakes: parsed && parsed.mistakes ? parsed.mistakes : '',
-                    correction: parsed && parsed.correction ? parsed.correction : '',
-                    advice: parsed && parsed.advice ? parsed.advice : ''
-                  }]);
-                  setTotalScore(s => s + score);
-                  setInput('');
-                  // 次の設問へ
-                  if (step + 1 < totalQuestions) {
-                    setStep(step + 1);
-                    if (questions) {
-                      let nextQ: string = '';
-                      if (step + 1 === 0) {
-                        nextQ = questions.summary.question;
-                      } else if (step + 1 === 1) {
-                        nextQ = `記事に出てきた「${questions.vocab[0].word}」を使って短文を作ってください。`;
-                      } else if (step + 1 === 2) {
-                        nextQ = `記事に出てきた「${questions.vocab[1].word}」を使って短文を作ってください。`;
-                      } else if (step + 1 === 3) {
-                        nextQ = questions.comprehension[0].question;
-                      } else if (step + 1 === 4) {
-                        nextQ = questions.comprehension[1].question;
-                      } else if (step + 1 === 5) {
-                        nextQ = questions.discussion.point;
-                      }
-                      setChat(prev => [...prev, { role: 'ai', text: nextQ }]);
+              const recovered = parseAIResponse(obj);
+              if (recovered && recovered.score !== undefined) {
+                score = typeof recovered.score === 'number' ? recovered.score : Number(recovered.score) || 0;
+                modelAnswer = recovered.model_answer || '';
+                feedbackText = `スコア: ${score}\n間違い: ${recovered.mistakes || ''}\n修正例: ${recovered.correction || ''}\nアドバイス: ${recovered.advice || ''}\n模範解答: ${modelAnswer}`;
+                setChat(prev => [...prev, {
+                  role: 'ai-feedback',
+                  text: feedbackText,
+                  score,
+                  modelAnswer: recovered && recovered.model_answer ? recovered.model_answer : '',
+                  mistakes: recovered && recovered.mistakes ? recovered.mistakes : '',
+                  correction: recovered && recovered.correction ? recovered.correction : '',
+                  advice: recovered && recovered.advice ? recovered.advice : ''
+                }]);
+                setTotalScore(s => s + score);
+                setInput('');
+                // 次の設問へ
+                if (step + 1 < totalQuestions) {
+                  setStep(step + 1);
+                  if (questions) {
+                    let nextQ: string = '';
+                    if (step + 1 === 0) {
+                      nextQ = questions.summary.question;
+                    } else if (step + 1 === 1) {
+                      nextQ = `記事に出てきた「${questions.vocab[0].word}」を使って短文を作ってください。`;
+                    } else if (step + 1 === 2) {
+                      nextQ = `記事に出てきた「${questions.vocab[1].word}」を使って短文を作ってください。`;
+                    } else if (step + 1 === 3) {
+                      nextQ = questions.comprehension[0].question;
+                    } else if (step + 1 === 4) {
+                      nextQ = questions.comprehension[1].question;
+                    } else if (step + 1 === 5) {
+                      nextQ = questions.discussion.point;
                     }
-                  } else {
-                    setShowResult(true);
+                    setChat(prev => [...prev, { role: 'ai', text: nextQ }]);
                   }
-                  setLoading(false);
-                  alreadySet = true;
-                  throw new Error('auto-recovered');
+                } else {
+                  setShowResult(true);
                 }
+                setLoading(false);
+                alreadySet = true;
+                throw new Error('auto-recovered');
               }
             } catch {}
             // 失敗時はRaw情報も必ずUIに1回だけ表示
@@ -523,7 +471,7 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
       feedbackText = `スコア: ${score}\n間違い: ${parsed.mistakes || ''}\n修正例: ${parsed.correction || ''}\nアドバイス: ${parsed.advice || ''}\n模範解答: ${modelAnswer}`;
     } catch (e) {
       if (e instanceof Error && e.message === 'auto-recovered') return;
-      feedbackText = 'AI応答の解析に失敗しました。\nRaw: ' + lastRawContent;
+      feedbackText = 'AI応答の解析に失敗しました。\nRaw: ' + (parsed && parsed.raw ? parsed.raw : '');
     }
     setChat(prev => [...prev, {
       role: 'ai-feedback',
@@ -565,39 +513,10 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
 
   // ディスカッション評価用のAI評価処理
   async function handleDiscussionEval(evalPrompt: string) {
-    const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', evalPrompt) : null;
-    let content = '';
-    let lastRawContent = '';
+    const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', evalPrompt) : await askAIWeb(evalPrompt);
     let parsed: any = null;
     try {
-      const resObj = typeof res === 'string' ? JSON.parse(res) : res;
-      if (resObj && typeof resObj === 'object' && 'score' in resObj) {
-        parsed = resObj;
-      } else {
-        content = resObj?.choices?.[0]?.message?.content || '';
-        let jsonStr = '';
-        let codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-        if (codeBlockMatch) {
-          jsonStr = codeBlockMatch[1].trim();
-        } else {
-          codeBlockMatch = content.match(/```\s*([\s\S]*?)\s*```/);
-          if (codeBlockMatch) {
-            jsonStr = codeBlockMatch[1].trim();
-          } else if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
-            jsonStr = content.trim();
-          } else {
-            const jsonMatches = content.match(/\{[\s\S]*?\}/g);
-            if (jsonMatches) {
-              jsonStr = jsonMatches[0];
-            }
-          }
-        }
-        if (jsonStr) {
-          try {
-            parsed = JSON.parse(jsonStr);
-          } catch (e) {}
-        }
-      }
+      parsed = parseAIResponse(res);
     } catch (e) {}
     let score = 0;
     let modelAnswer = '';
@@ -623,13 +542,10 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
   const handleSummary = async () => {
     setSummaryLoading(true);
     const prompt = buildSummaryPrompt(article, chat);
-    const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', prompt) : null;
+    const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', prompt) : await askAIWeb(prompt);
     let parsed = null;
     try {
-      const match = typeof res === 'string' ? res.match(/\{[\s\S]*\}/) : null;
-      const jsonStr = match ? match[0] : res;
-      parsed = JSON.parse(jsonStr);
-
+      parsed = parseAIResponse(res);
       // スコア情報をchatから抽出
       const scores: Record<string, number> = {};
       let idx = 0;
@@ -647,7 +563,6 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
         }
       }
       const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
-
       setSummaryData({
         ...parsed,
         scores,

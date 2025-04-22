@@ -22,14 +22,31 @@ const Home: React.FC<Props> = ({ setPage, setArticle }) => {
     setError(null);
     const prompt = buildCleanPrompt(input);
     try {
-      const res = window.electronAPI?.ipcRenderer ? await window.electronAPI.ipcRenderer.invoke('ask-ai', prompt) : null;
       let cleaned = '';
-      if (res) {
+      if (window.electronAPI?.ipcRenderer) {
+        const res = await window.electronAPI.ipcRenderer.invoke('ask-ai', prompt);
+        if (res) {
+          try {
+            const match = typeof res === 'string' ? res.match(/\{[\s\S]*\}/) : null;
+            const jsonStr = match ? match[0] : res;
+            const parsed = JSON.parse(jsonStr);
+            cleaned = parsed.cleaned_article || '';
+          } catch {}
+        }
+      } else {
+        // PWA/Web: /api/ask-ai経由で記事整形
+        const res = await fetch('/api/ask-ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: prompt, type: 'perplexity' })
+        });
+        const data = await res.json();
+        let content = data?.choices?.[0]?.message?.content || '';
         try {
-          const match = typeof res === 'string' ? res.match(/\{[\s\S]*\}/) : null;
-          const jsonStr = match ? match[0] : res;
-          const parsed = JSON.parse(jsonStr);
-          cleaned = parsed.cleaned_article || '';
+          if (typeof content === 'string' && content.trim().startsWith('{')) {
+            const parsed = JSON.parse(content);
+            cleaned = parsed.cleaned_article || '';
+          }
         } catch {}
       }
       if (cleaned && cleaned.length > 50) {

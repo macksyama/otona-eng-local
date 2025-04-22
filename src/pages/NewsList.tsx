@@ -11,7 +11,7 @@ interface Props {
   onSelect: () => void; // 記事クリック後に記事入力画面へ遷移するコールバック
 }
 
-const BBC_RSS_URL = 'https://feeds.bbci.co.uk/news/rss.xml';
+const BBC_RSS_URL = '/api/bbc-news';
 
 const NewsList: React.FC<Props> = ({ onSelect }) => {
   const [news, setNews] = useState<NewsItem[]>([]);

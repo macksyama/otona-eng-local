@@ -61,6 +61,16 @@ const UserIcon = (
   />
 );
 
+// AIリクエスト共通関数
+async function askAIWeb(prompt: string): Promise<any> {
+  const res = await fetch('/api/ask-ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question: prompt, type: 'perplexity' })
+  });
+  return await res.json();
+}
+
 const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
   const [step, setStep] = useState(0); // 現在の設問インデックス
   const [input, setInput] = useState('');
@@ -82,7 +92,9 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
       setLoading(true);
       setError(null);
       const prompt = buildAllQuestionsPrompt(article);
-      const res = ipcRenderer ? await ipcRenderer.invoke('ask-ai', prompt) : null;
+      const res = ipcRenderer
+        ? await ipcRenderer.invoke('ask-ai', prompt)
+        : await askAIWeb(prompt);
       let content = '';
       let parsed: any = null;
       try {

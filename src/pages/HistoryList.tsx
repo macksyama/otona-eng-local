@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLessonHistories, LessonHistory, getRecentLessonHistories } from './history';
+import { getLessonHistories, LessonHistory, getRecentLessonSummaries } from './history';
 
 // カレンダー用ユーティリティ
 function getDaysInMonth(year: number, month: number) {
@@ -46,7 +46,7 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
   useEffect(() => {
     async function fetchSummary() {
       setLoadingSummary(true);
-      const recent = getRecentLessonHistories();
+      const recent = getRecentLessonSummaries(100);
       const goal = localStorage.getItem('learning-goal') || 'ネイティブスピーカーと、時事問題に関してネイティブと同じように深い議論ができること。';
       let result = '';
       if ((window as any).electron?.invoke) {
@@ -249,12 +249,4 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
   );
 };
 
-export default HistoryList;
-
-// 直近1件（新しい順）を取得（記事本文は除外）
-export function getRecentLessonHistories(): Omit<LessonHistory, 'article'>[] {
-  return getLessonHistories()
-    .slice(-1)
-    .reverse()
-    .map(({ article, ...rest }) => rest);
-} 
+export default HistoryList; 

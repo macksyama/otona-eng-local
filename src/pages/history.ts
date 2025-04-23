@@ -32,4 +32,16 @@ export function getRecentLessonHistories(): Omit<LessonHistory, 'article'>[] {
     .slice(-300)
     .reverse()
     .map(({ article, ...rest }) => rest);
+}
+
+// サマリーページに表示する内容＋日時を返す（直近N件、新しい順、記事本文除外）
+export function getRecentLessonSummaries(n: number = 1) {
+  return getLessonHistories()
+    .slice(-n)
+    .reverse()
+    .map(({ summary, timestamp }) => {
+      if (!summary) return { timestamp };
+      const { scores, score_chart, vocab_phrases, praise, improvement, advice } = summary;
+      return { timestamp, scores, score_chart, vocab_phrases, praise, improvement, advice };
+    });
 } 

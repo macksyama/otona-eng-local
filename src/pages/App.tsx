@@ -120,7 +120,7 @@ const App: React.FC = () => {
           {page === 'home' && <Home setPage={handleSetPage} setArticle={setArticle} />}
           {page === 'lesson' && <Lesson article={article} setPage={handleSetPage} setSummaryData={setSummaryData} />}
           {page === 'summary' && <Summary setPage={handleSetPage} summaryData={summaryData} />}
-          {page === 'history' && <HistoryList setPage={handleSetPage} reloadKey={page} />}
+          {page === 'history' && <HistoryList setPage={handleSetPage} reloadKey={page} showBackToSummary={false} />}
         </>
       )}
     </div>

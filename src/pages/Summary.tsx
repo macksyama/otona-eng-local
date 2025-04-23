@@ -4,6 +4,7 @@ import type { Page } from './App';
 interface Props {
   setPage: (page: Page) => void;
   summaryData: any;
+  isModal?: boolean;
 }
 
 // 簡易円グラフ（SVG）描画関数
@@ -49,7 +50,7 @@ function PieChart({ data }: { data: Record<string, number> }) {
   );
 }
 
-const Summary: React.FC<Props> = ({ setPage, summaryData }) => {
+const Summary: React.FC<Props> = ({ setPage, summaryData, isModal }) => {
   if (!summaryData) {
     return (
       <div className="max-w-2xl mx-auto py-12 text-center">
@@ -69,11 +70,32 @@ const Summary: React.FC<Props> = ({ setPage, summaryData }) => {
       </div>
     );
   }
-  const { scores, score_chart, vocab_phrases, praise, improvement, advice } = summaryData;
-  // 合計点数はscoresの合計値で再計算
-  const totalScore: number = scores ? (Object.values(scores).map(Number) as number[]).reduce((a, b) => a + b, 0) : 0;
+  // summaryData.summaryがあればそれを使う
+  const data = summaryData.summary ? summaryData.summary : summaryData;
+  let { scores, score_chart, vocab_phrases, praise, improvement, advice } = data;
+  // 合計点数・各設問点数の算出
+  let totalScore: number = 0;
+  // answers配列から計算（scoresがなければ）
+  if (!scores && Array.isArray(summaryData.answers)) {
+    scores = {};
+    let idx = 0;
+    for (const ans of summaryData.answers) {
+      if (ans.feedback && typeof ans.feedback.score === 'number') {
+        let key = '';
+        if (idx === 0) key = 'summary';
+        else if (idx === 1) key = 'vocab1';
+        else if (idx === 2) key = 'vocab2';
+        else if (idx === 3) key = 'comprehension1';
+        else if (idx === 4) key = 'comprehension2';
+        else if (idx === 5) key = 'discussion';
+        scores[key] = ans.feedback.score;
+        idx++;
+      }
+    }
+  }
+  totalScore = scores ? (Object.values(scores).map(Number) as number[]).reduce((a, b) => a + b, 0) : 0;
   // 円グラフデータ（未獲得点はグレーで追加）
-  const chartData = { ...(score_chart || scores || {}) };
+  const chartData = { ...(data.score_chart || scores || {}) };
   if (totalScore < 100) {
     chartData['未獲得'] = 100 - totalScore;
   }
@@ -158,12 +180,16 @@ const Summary: React.FC<Props> = ({ setPage, summaryData }) => {
         <h3 className="font-bold mb-1">アドバイス</h3>
         <p className="bg-blue-50 border-l-4 border-blue-400 p-2 rounded text-blue-800 whitespace-pre-line">{advice}</p>
       </div>
-      <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setPage('news')}>
-        ホームへ戻る
-      </button>
-      <button className="mt-4 ml-4 px-4 py-2 bg-gray-600 text-white rounded" onClick={() => setPage('history')}>
-        履歴一覧へ
-      </button>
+      {!isModal && (
+        <>
+          <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setPage('news')}>
+            ホームへ戻る
+          </button>
+          <button className="mt-4 ml-4 px-4 py-2 bg-gray-600 text-white rounded" onClick={() => setPage('history')}>
+            履歴一覧へ
+          </button>
+        </>
+      )}
     </div>
   );
 };

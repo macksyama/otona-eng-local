@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getLessonHistories, LessonHistory, getRecentLessonSummaries } from './history';
+import Summary from './Summary';
 
 // カレンダー用ユーティリティ
 function getDaysInMonth(year: number, month: number) {
@@ -10,9 +11,17 @@ function pad2(n: number) { return n < 10 ? '0' + n : n; }
 // 履歴削除機能のON/OFF（trueで有効、falseで無効）
 const ENABLE_HISTORY_DELETE = true;
 
-const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; reloadKey?: any }> = ({ setPage, reloadKey }) => {
+interface HistoryListProps {
+  setPage: (page: import('./App').Page) => void;
+  reloadKey?: any;
+  showBackToSummary?: boolean;
+}
+
+const HistoryList: React.FC<HistoryListProps> = ({ setPage, reloadKey, showBackToSummary = true }) => {
   const [histories, setHistories] = useState<LessonHistory[]>(() => getLessonHistories().slice().reverse());
   const [editMode, setEditMode] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalSummary, setModalSummary] = useState<any>(null);
   // 学習日（YYYY-MM-DD）一覧
   const learnedDays = new Set(histories.map(h => new Date(h.timestamp).toISOString().slice(0, 10)));
   // カレンダー表示月のstate
@@ -190,6 +199,12 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
     setHistories(filtered.slice().reverse());
   };
 
+  // 履歴詳細モーダルを開く
+  const handleOpenModal = (h: LessonHistory) => {
+    setModalSummary(h);
+    setModalOpen(true);
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex items-center mb-4">
@@ -243,15 +258,21 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
         <div className="font-bold mb-2 text-green-700">学びのまとめ・アドバイス</div>
         {loadingSummary ? <div>まとめを生成中...</div> : <div style={{ whiteSpace: 'pre-wrap' }}>{renderSummary(summary)}</div>}
       </div>
-      <button className="mb-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setPage('summary')}>
-        サマリーに戻る
-      </button>
+      {showBackToSummary && (
+        <button className="mb-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setPage('summary')}>
+          サマリーに戻る
+        </button>
+      )}
       {histories.length === 0 ? (
         <div className="text-gray-500">履歴がありません。</div>
       ) : (
         <ul className="space-y-4">
           {histories.map((h, i) => (
-            <li key={h.lessonId} className="bg-white rounded shadow p-4 flex flex-col relative">
+            <li
+              key={h.lessonId}
+              className="bg-white rounded shadow p-4 flex flex-col relative cursor-pointer hover:bg-blue-50"
+              onClick={() => !editMode && handleOpenModal(h)}
+            >
               <div className="text-sm text-gray-500">{new Date(h.timestamp).toLocaleString()}</div>
               <div className="font-bold mt-1 mb-2">{h.article.slice(0, 40)}{h.article.length > 40 ? '...' : ''}</div>
               <div className="text-blue-700 font-bold">
@@ -273,7 +294,7 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
               </div>
               {editMode && (
                 <button
-                  onClick={() => handleDelete(h.lessonId)}
+                  onClick={e => { e.stopPropagation(); handleDelete(h.lessonId); }}
                   title="この履歴を削除"
                   style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer' }}
                 >
@@ -287,6 +308,21 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
             </li>
           ))}
         </ul>
+      )}
+      {/* 履歴詳細モーダル */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full relative p-6 overflow-y-auto max-h-[90vh]">
+            <button
+              className="absolute top-2 right-6 text-gray-500 hover:text-gray-800 text-2xl font-bold"
+              onClick={() => setModalOpen(false)}
+              aria-label="閉じる"
+            >
+              ×
+            </button>
+            <Summary setPage={() => {}} summaryData={modalSummary} isModal={true} />
+          </div>
+        </div>
       )}
     </div>
   );

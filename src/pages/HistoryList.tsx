@@ -7,8 +7,12 @@ function getDaysInMonth(year: number, month: number) {
 }
 function pad2(n: number) { return n < 10 ? '0' + n : n; }
 
+// 履歴削除機能のON/OFF（trueで有効、falseで無効）
+const ENABLE_HISTORY_DELETE = true;
+
 const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; reloadKey?: any }> = ({ setPage, reloadKey }) => {
-  const histories: LessonHistory[] = getLessonHistories().slice().reverse();
+  const [histories, setHistories] = useState<LessonHistory[]>(() => getLessonHistories().slice().reverse());
+  const [editMode, setEditMode] = useState(false);
   // 学習日（YYYY-MM-DD）一覧
   const learnedDays = new Set(histories.map(h => new Date(h.timestamp).toISOString().slice(0, 10)));
   // カレンダー表示月のstate
@@ -86,6 +90,15 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
           achievement: '目標達成度',
           advice: '目標達成までの差分と次のステップのアドバイス',
         };
+        // 本文中の**太字**もすべて太字化
+        const boldify = (text: string) => {
+          const parts = text.split(/(\*\*[^*]+\*\*)/g);
+          return parts.map((part, j) =>
+            part.startsWith('**') && part.endsWith('**')
+              ? <strong key={j}>{part.slice(2, -2)}</strong>
+              : part
+          );
+        };
         return (
           <div>
             {Object.entries(obj).map(([key, value], i) => (
@@ -94,17 +107,17 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
                 {typeof value === 'object' && value !== null ? (
                   Array.isArray(value) ? (
                     <ul className="ml-6 list-disc">
-                      {value.map((v, j) => <li key={j}>{String(v)}</li>)}
+                      {value.map((v, j) => <li key={j}>{typeof v === 'string' ? boldify(v) : String(v)}</li>)}
                     </ul>
                   ) : (
                     <ul className="ml-6 list-disc">
                       {Object.entries(value).map(([k, v], idx) => (
-                        <li key={idx}><strong>{k}:</strong> {String(v)}</li>
+                        <li key={idx}><strong>{k}:</strong> {typeof v === 'string' ? boldify(v) : String(v)}</li>
                       ))}
                     </ul>
                   )
                 ) : (
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{String(value)}</div>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{typeof value === 'string' ? boldify(value) : String(value)}</div>
                 )}
               </div>
             ))}
@@ -168,9 +181,26 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
     );
   }
 
+  // 履歴削除処理
+  const handleDelete = (lessonId: string) => {
+    if (!window.confirm('この履歴を削除しますか？')) return;
+    const all = getLessonHistories();
+    const filtered = all.filter(h => h.lessonId !== lessonId);
+    localStorage.setItem('lessonHistories', JSON.stringify(filtered));
+    setHistories(filtered.slice().reverse());
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-2xl font-bold mb-4">レッスン履歴一覧</h2>
+      <div className="flex items-center mb-4">
+        <h2 className="text-2xl font-bold mr-4">レッスン履歴一覧</h2>
+        <button
+          className={`px-3 py-1 rounded ${editMode ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          onClick={() => setEditMode(e => !e)}
+        >
+          {editMode ? '編集モード終了' : '編集'}
+        </button>
+      </div>
       {/* カレンダー表示 */}
       <div className="mb-6">
         <div className="flex items-center justify-between font-bold mb-2">
@@ -221,7 +251,7 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
       ) : (
         <ul className="space-y-4">
           {histories.map((h, i) => (
-            <li key={h.lessonId} className="bg-white rounded shadow p-4 flex flex-col">
+            <li key={h.lessonId} className="bg-white rounded shadow p-4 flex flex-col relative">
               <div className="text-sm text-gray-500">{new Date(h.timestamp).toLocaleString()}</div>
               <div className="font-bold mt-1 mb-2">{h.article.slice(0, 40)}{h.article.length > 40 ? '...' : ''}</div>
               <div className="text-blue-700 font-bold">
@@ -241,6 +271,19 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; rel
                   })()
                 }
               </div>
+              {editMode && (
+                <button
+                  onClick={() => handleDelete(h.lessonId)}
+                  title="この履歴を削除"
+                  style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  {/* Heroicons minus-circle SVG */}
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="28" height="28">
+                    <circle cx="12" cy="12" r="10" fill="#f87171" />
+                    <rect x="8" y="11" width="8" height="2" rx="1" fill="#fff" />
+                  </svg>
+                </button>
+              )}
             </li>
           ))}
         </ul>

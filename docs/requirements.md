@@ -121,4 +121,24 @@
 
 ---
 
+## 8. PWA対応・デプロイ・API切り替え・今後の運用
+
+### 8.1 PWA対応・Vercelデプロイ
+- 本アプリはElectron版とPWA（Web）版の両方をサポート
+- PWA版はVercel等のホスティングサービスでデプロイ可能
+- service-worker.jsはpublic配下に配置し、PWAとして動作
+- デプロイ手順やPWA固有の注意点はREADME参照
+
+### 8.2 API切り替え（OpenAI/Perplexity）
+- AI APIはOpenAIとPerplexityの2種類をサポート
+- .envファイルでAPIキーを管理
+- `src/main.ts`でapiTypeを切り替え可能
+- 設問生成・評価時のレスポンス形式はJSONスキーマで厳格に管理
+
+### 8.3 共通ロジック分離・今後の運用
+- Electron版・PWA版で共通化できるロジック（API通信・データ構造・履歴管理等）は`src/common`等に分離して管理する方針
+- UIやプラットフォーム固有部分のみ個別に実装
+- 新機能追加時は共通ロジック→各プラットフォームUIの順で実装・テスト
+- 詳細な運用方針やディレクトリ構成例はREADME参照
+
 ご要望・追加仕様があれば、随時追記・修正します。

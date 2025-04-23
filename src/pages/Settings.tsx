@@ -7,8 +7,11 @@ const API_TYPES = [
   { label: 'OpenAI', value: 'openai' },
 ];
 
+const DEFAULT_GOAL = 'ネイティブスピーカーと、時事問題に関してネイティブと同じように深い議論ができること。';
+
 const Settings: React.FC = () => {
   const [apiType, setApiType] = useState<'perplexity' | 'openai'>('perplexity');
+  const [goal, setGoal] = useState<string>(() => localStorage.getItem('learning-goal') || DEFAULT_GOAL);
 
   useEffect(() => {
     // 初期値をメインプロセスに通知
@@ -23,6 +26,11 @@ const Settings: React.FC = () => {
     if (ipcRenderer) {
       ipcRenderer.invoke('set-api-type', value);
     }
+  };
+
+  const handleGoalChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setGoal(e.target.value);
+    localStorage.setItem('learning-goal', e.target.value);
   };
 
   return (
@@ -41,6 +49,16 @@ const Settings: React.FC = () => {
             {type.label}
           </label>
         ))}
+      </div>
+      <div style={{ marginTop: 32 }}>
+        <h2>学習目標</h2>
+        <textarea
+          value={goal}
+          onChange={handleGoalChange}
+          rows={3}
+          style={{ width: '100%', minHeight: 60, fontSize: 16, padding: 8 }}
+          placeholder="例: ネイティブスピーカーと、時事問題に関してネイティブと同じように深い議論ができること。"
+        />
       </div>
     </div>
   );

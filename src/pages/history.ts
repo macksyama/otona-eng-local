@@ -24,4 +24,12 @@ export function getLessonHistories(): LessonHistory[] {
   } catch {
     return [];
   }
+}
+
+// 直近300件（新しい順）を取得（記事本文は除外）
+export function getRecentLessonHistories(): Omit<LessonHistory, 'article'>[] {
+  return getLessonHistories()
+    .slice(-300)
+    .reverse()
+    .map(({ article, ...rest }) => rest);
 } 

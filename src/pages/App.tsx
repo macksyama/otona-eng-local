@@ -42,6 +42,23 @@ const App: React.FC = () => {
     </svg>
   );
 
+  // Homeアイコン（家）
+  const HomeIcon = (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" width="32" height="32">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M4.5 10.5V21a1.5 1.5 0 001.5 1.5h3A1.5 1.5 0 0010.5 21V16.5a1.5 1.5 0 011.5-1.5h0a1.5 1.5 0 011.5 1.5V21a1.5 1.5 0 001.5 1.5h3A1.5 1.5 0 0019.5 21V10.5" />
+    </svg>
+  );
+
+  // 履歴アイコン（Time Machine風: 円形矢印＋時計）
+  const HistoryIcon = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" width="32" height="32">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" fill="none" />
+      <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20 12a8 8 0 1 0-2.34 5.66" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M20 12v4h-4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+
   // Heroicons ArrowRightOnRectangle（ログアウトアイコン）
   const LogoutIcon = (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" width="32" height="32">
@@ -52,7 +69,26 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      {/* 右上に歯車アイコン */}
+      {/* 右上ナビゲーションアイコン群 */}
+      <div style={{ position: 'absolute', top: 16, right: 96, display: 'flex', gap: 8, zIndex: 20 }}>
+        {/* Homeアイコン */}
+        <button
+          onClick={() => handleSetPage('news')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+          aria-label="ホーム"
+        >
+          {HomeIcon}
+        </button>
+        {/* 履歴アイコン */}
+        <button
+          onClick={() => handleSetPage('history')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+          aria-label="履歴"
+        >
+          {HistoryIcon}
+        </button>
+      </div>
+      {/* 設定アイコン */}
       <button
         onClick={() => handleSetPage('settings')}
         style={{ position: 'absolute', top: 16, right: 48, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
@@ -84,7 +120,7 @@ const App: React.FC = () => {
           {page === 'home' && <Home setPage={handleSetPage} setArticle={setArticle} />}
           {page === 'lesson' && <Lesson article={article} setPage={handleSetPage} setSummaryData={setSummaryData} />}
           {page === 'summary' && <Summary setPage={handleSetPage} summaryData={summaryData} />}
-          {page === 'history' && <HistoryList setPage={handleSetPage} />}
+          {page === 'history' && <HistoryList setPage={handleSetPage} reloadKey={page} />}
         </>
       )}
     </div>

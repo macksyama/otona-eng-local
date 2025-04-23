@@ -1,11 +1,16 @@
-import path from 'path';
-import fs from 'fs';
-import dotenv from 'dotenv';
-import fetch from 'node-fetch';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const node_fetch_1 = __importDefault(require("node-fetch"));
 // .env読み込み
-const envPath = path.resolve(process.cwd(), '.env');
-if (fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath });
+const envPath = path_1.default.resolve(process.cwd(), '.env');
+if (fs_1.default.existsSync(envPath)) {
+    dotenv_1.default.config({ path: envPath });
 }
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 const article = `Donald Trump has said the US will "take a pass" on brokering further Russia-Ukraine talks if Moscow or Kyiv "make it very difficult" to reach a peace deal.
@@ -90,7 +95,7 @@ function buildSummaryPrompt(article, answer) {
     return `#Order\nYou are an English teacher. Please evaluate the following student's answer to the question below, based on the article provided.\n\n#Task\n- Score the answer out of 15 points.\n- Point out any mistakes and provide corrections.\n- Give advice on how to improve the answer.\n- Provide a model answer.\n- All output should be in English.\n- Output format (JSON parsable):\n{\n  "score": 12,\n  "mistakes": "The summary missed the main point about ...",\n  "advice": "Try to include ...",\n  "correction": "Your summary should be ...",\n  "model_answer": "This article is about ..."\n}\n\n#Input\nArticle: ${article}\nQuestion: Summarize the article.\nStudent answer: ${answer}`;
 }
 async function askAI(prompt) {
-    const res = await fetch('https://api.perplexity.ai/chat/completions', {
+    const res = await (0, node_fetch_1.default)('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,

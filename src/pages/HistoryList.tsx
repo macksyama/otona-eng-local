@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { getLessonHistories, LessonHistory } from './history';
+import React, { useState, useEffect } from 'react';
+import { getLessonHistories, LessonHistory, getRecentLessonHistories } from './history';
 
 // カレンダー用ユーティリティ
 function getDaysInMonth(year: number, month: number) {
@@ -7,7 +7,7 @@ function getDaysInMonth(year: number, month: number) {
 }
 function pad2(n: number) { return n < 10 ? '0' + n : n; }
 
-const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void }> = ({ setPage }) => {
+const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void; reloadKey?: any }> = ({ setPage, reloadKey }) => {
   const histories: LessonHistory[] = getLessonHistories().slice().reverse();
   // 学習日（YYYY-MM-DD）一覧
   const learnedDays = new Set(histories.map(h => new Date(h.timestamp).toISOString().slice(0, 10)));
@@ -39,6 +39,134 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void }> =
 
   // 翌月ボタンの活性判定
   const isNextMonthActive = calendarYear < today.getFullYear() || (calendarYear === today.getFullYear() && calendarMonth < today.getMonth());
+
+  // --- まとめ・アドバイス用 ---
+  const [summary, setSummary] = useState<string>('');
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  useEffect(() => {
+    async function fetchSummary() {
+      setLoadingSummary(true);
+      const recent = getRecentLessonHistories();
+      const goal = localStorage.getItem('learning-goal') || 'ネイティブスピーカーと、時事問題に関してネイティブと同じように深い議論ができること。';
+      let result = '';
+      if ((window as any).electron?.invoke) {
+        // Electron
+        result = await (window as any).electron.invoke('generate-history-summary', { histories: recent, goal });
+      } else {
+        // PWA/Web: /api/ask-ai経由でAIまとめ取得
+        const prompt = `あなたは英語学習の専門家です。以下はユーザーの過去のレッスン履歴（設問・回答・AIフィードバック・日時）です。\n- 学習目標: ${goal}\n- 学んだ内容の要約\n- 得意な分野・苦手な分野・ミスの傾向\n- 目標達成度（学習目標に対してどの程度到達しているか、差分は何か）\n- 目標達成までの差分と、次のステップのアドバイス\nを日本語でカテゴリごとにJSON形式で返してください。各カテゴリはkey（例: summary, strengths, weaknesses, mistakes, achievement, advice）で分けてください。\n「次のステップのアドバイス」では、ユーザーに対する具体的な提案や練習方法、改善ポイントを必ず含めてください。まとめは必ずユーザーへの直接的なアドバイスとなるようにしてください。\n\n【履歴データ】\n${JSON.stringify(recent, null, 2)}`;
+        const res = await fetch('/api/ask-ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: prompt, type: 'perplexity' })
+        });
+        const data = await res.json();
+        result = data?.choices?.[0]?.message?.content || '';
+      }
+      setSummary(result || 'まとめの取得に失敗しました');
+      setLoadingSummary(false);
+    }
+    fetchSummary();
+  }, [reloadKey]);
+
+  // カテゴリごとに整形して表示（Markdown風記法対応・ノイズ除去）
+  function renderSummary(summary: string) {
+    if (!summary) return null;
+    // 配列で返ってきて2番目がJSONオブジェクトの場合はそれを使う
+    try {
+      const arr = JSON.parse(summary);
+      if (Array.isArray(arr) && typeof arr[1] === 'object' && arr[1] !== null) {
+        const obj = arr[1];
+        const keyToTitle: Record<string, string> = {
+          goal: '学習目標',
+          summary: '学んだ内容の要約',
+          strengths: '得意な分野',
+          weaknesses: '苦手な分野',
+          mistakes: 'ミスの傾向',
+          achievement: '目標達成度',
+          advice: '目標達成までの差分と次のステップのアドバイス',
+        };
+        return (
+          <div>
+            {Object.entries(obj).map(([key, value], i) => (
+              <div key={key} style={{ marginBottom: 16 }}>
+                <h3 className="mt-4 mb-1 text-lg font-bold text-green-800">{keyToTitle[key] || key}</h3>
+                {typeof value === 'object' && value !== null ? (
+                  Array.isArray(value) ? (
+                    <ul className="ml-6 list-disc">
+                      {value.map((v, j) => <li key={j}>{String(v)}</li>)}
+                    </ul>
+                  ) : (
+                    <ul className="ml-6 list-disc">
+                      {Object.entries(value).map(([k, v], idx) => (
+                        <li key={idx}><strong>{k}:</strong> {String(v)}</li>
+                      ))}
+                    </ul>
+                  )
+                ) : (
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{String(value)}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+    } catch {}
+    // 0や空行などノイズ除去
+    const clean = summary
+      .replace(/^0+$/gm, '') // 行頭の0のみ
+      .replace(/^\s*\n/gm, '') // 空行
+      .replace(/^-\s*0+\s*/gm, '-') // 箇条書きの頭に0が入る場合
+      .replace(/\n{2,}/g, '\n'); // 連続改行を1つに
+    // Markdown風パース
+    const lines = clean.split(/\r?\n/);
+    return (
+      <div>
+        {lines.map((line, i) => {
+          if (/^###?\s*\*\*(.+)\*\*/.test(line)) {
+            // ### **見出し**
+            const m = line.match(/^###?\s*\*\*(.+)\*\*/);
+            return <h3 key={i} className="mt-4 mb-1 text-lg font-bold text-green-800">{m ? m[1] : line}</h3>;
+          } else if (/^###?\s*(.+)/.test(line)) {
+            // ### 見出し
+            const m = line.match(/^###?\s*(.+)/);
+            return <h3 key={i} className="mt-4 mb-1 text-lg font-bold text-green-800">{m ? m[1] : line}</h3>;
+          } else if (/^\*\*(.+)\*\*/.test(line)) {
+            // **太字**（行全体）
+            const m = line.match(/^\*\*(.+)\*\*/);
+            return <div key={i} className="font-semibold text-green-700 mt-2"><strong>{m ? m[1] : line}</strong></div>;
+          } else if (/^---+$/.test(line)) {
+            // 区切り線
+            return <hr key={i} className="my-2" />;
+          } else if (/^-\s+(.+)/.test(line)) {
+            // 箇条書き
+            const m = line.match(/^-\s+(.+)/);
+            // 箇条書き内の**太字**も太字化
+            const parts = (m ? m[1] : line).split(/(\*\*[^*]+\*\*)/g);
+            return <li key={i} className="ml-6 list-disc">{parts.map((part, j) => part.startsWith('**') && part.endsWith('**') ? <strong key={j}>{part.slice(2, -2)}</strong> : part)}</li>;
+          } else if (/^\s*\d+\s*$/.test(line)) {
+            // 0や数字だけの行は無視
+            return null;
+          } else if (/^\s*$/.test(line)) {
+            // 空行は無視
+            return null;
+          } else {
+            // 通常テキスト：文中の**太字**も太字化
+            const parts = line.split(/(\*\*[^*]+\*\*)/g);
+            return (
+              <div key={i}>
+                {parts.map((part, j) =>
+                  part.startsWith('**') && part.endsWith('**')
+                    ? <strong key={j}>{part.slice(2, -2)}</strong>
+                    : part
+                )}
+              </div>
+            );
+          }
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -80,6 +208,11 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void }> =
           })}
         </div>
       </div>
+      {/* まとめ・アドバイス表示 */}
+      <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded">
+        <div className="font-bold mb-2 text-green-700">学びのまとめ・アドバイス</div>
+        {loadingSummary ? <div>まとめを生成中...</div> : <div style={{ whiteSpace: 'pre-wrap' }}>{renderSummary(summary)}</div>}
+      </div>
       <button className="mb-4 px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setPage('summary')}>
         サマリーに戻る
       </button>
@@ -116,4 +249,12 @@ const HistoryList: React.FC<{ setPage: (page: import('./App').Page) => void }> =
   );
 };
 
-export default HistoryList; 
+export default HistoryList;
+
+// 直近1件（新しい順）を取得（記事本文は除外）
+export function getRecentLessonHistories(): Omit<LessonHistory, 'article'>[] {
+  return getLessonHistories()
+    .slice(-1)
+    .reverse()
+    .map(({ article, ...rest }) => rest);
+} 

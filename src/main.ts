@@ -202,6 +202,12 @@ ipcMain.handle('get-last-perplexity-response', async () => {
     return '';
   }
 });
+// 履歴まとめ・アドバイス生成IPC
+ipcMain.handle('generate-history-summary', async (event, histories) => {
+  // プロンプト組み立て
+  const prompt = `あなたは英語学習の専門家です。以下はユーザーの過去のレッスン履歴（設問・回答・AIフィードバック・日時）です。\n- 学んだ内容の要約\n- 得意な分野・苦手な分野・ミスの傾向\n- 目標達成度（例：TOEICスコアや語彙数など任意指標でOK）\n- 目標達成までの差分と、次のステップのアドバイス\nを日本語で簡潔にまとめてください。\n\n【履歴データ】\n${JSON.stringify(histories, null, 2)}`;
+  return await askAI(prompt);
+});
 
 // PWA対応: service-worker.jsをpublicに配置すること
 // VercelやNetlifyではpublic配下がそのまま公開されるため、src/service-worker.jsをpublic/service-worker.jsにコピーしてください

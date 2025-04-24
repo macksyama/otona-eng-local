@@ -12,7 +12,7 @@ const AuthChoice: React.FC<AuthChoiceProps> = ({ onGoogleLogin, onGuest }) => {
         <h2 className="text-xl mb-4">ログイン方法を選択</h2>
         <button
           onClick={onGoogleLogin}
-          className="bg-red-500 text-white px-4 py-2 rounded w-full mb-2 flex items-center justify-center gap-2"
+          className="bg-blue-600 text-white px-4 py-2 rounded w-full mb-2 flex items-center justify-center gap-2"
         >
           <img src="/google-icon.png" alt="Google" className="w-5 h-5" />
           Googleでログイン

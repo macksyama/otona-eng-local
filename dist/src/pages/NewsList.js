@@ -1,13 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const jsx_runtime_1 = require("react/jsx-runtime");
-const react_1 = require("react");
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useEffect, useState } from 'react';
 const BBC_RSS_URL = '/api/bbc-news';
 const NewsList = ({ onSelect }) => {
-    const [news, setNews] = (0, react_1.useState)([]);
-    const [loading, setLoading] = (0, react_1.useState)(true);
-    const [error, setError] = (0, react_1.useState)(null);
-    (0, react_1.useEffect)(() => {
+    const [news, setNews] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    useEffect(() => {
         async function fetchRSS() {
             setLoading(true);
             setError(null);
@@ -58,6 +56,6 @@ const NewsList = ({ onSelect }) => {
         }
         onSelect();
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "max-w-3xl mx-auto py-8", children: [(0, jsx_runtime_1.jsx)("h2", { className: "text-2xl font-bold mb-4", children: "BBC\u30CB\u30E5\u30FC\u30B9\u4E00\u89A7" }), loading && (0, jsx_runtime_1.jsx)("div", { children: "\u8AAD\u307F\u8FBC\u307F\u4E2D..." }), error && (0, jsx_runtime_1.jsx)("div", { className: "text-red-600", children: error }), (0, jsx_runtime_1.jsx)("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6", children: news.map((item, i) => ((0, jsx_runtime_1.jsxs)("div", { className: "bg-white rounded shadow p-4 flex flex-col cursor-pointer hover:bg-blue-50", onClick: () => handleClick(item.link), children: [(0, jsx_runtime_1.jsx)("img", { src: item.image, alt: item.title, className: "w-full h-40 object-cover rounded mb-2" }), (0, jsx_runtime_1.jsx)("div", { className: "font-bold text-lg mb-1", children: item.title }), (0, jsx_runtime_1.jsx)("div", { className: "text-gray-700 text-sm line-clamp-3 mb-2", dangerouslySetInnerHTML: { __html: item.description } }), (0, jsx_runtime_1.jsx)("button", { className: "mt-auto px-3 py-1 bg-blue-600 text-white rounded self-end", children: "\u8A18\u4E8B\u3092\u8AAD\u3080" })] }, i))) })] }));
+    return (_jsxs("div", { className: "max-w-3xl mx-auto py-8", children: [_jsx("h2", { className: "text-2xl font-bold mb-4", children: "BBC\u30CB\u30E5\u30FC\u30B9\u4E00\u89A7" }), loading && _jsx("div", { children: "\u8AAD\u307F\u8FBC\u307F\u4E2D..." }), error && _jsx("div", { className: "text-red-600", children: error }), _jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6", children: news.map((item, i) => (_jsxs("div", { className: "bg-white rounded shadow p-4 flex flex-col cursor-pointer hover:bg-blue-50", onClick: () => handleClick(item.link), children: [_jsx("img", { src: item.image, alt: item.title, className: "w-full h-40 object-cover rounded mb-2" }), _jsx("div", { className: "font-bold text-lg mb-1", children: item.title }), _jsx("div", { className: "text-gray-700 text-sm line-clamp-3 mb-2", dangerouslySetInnerHTML: { __html: item.description } }), _jsx("button", { className: "mt-auto px-3 py-1 bg-blue-600 text-white rounded self-end", children: "\u8A18\u4E8B\u3092\u8AAD\u3080" })] }, i))) })] }));
 };
-exports.default = NewsList;
+export default NewsList;

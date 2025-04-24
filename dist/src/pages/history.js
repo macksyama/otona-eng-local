@@ -1,17 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveLessonHistory = saveLessonHistory;
-exports.getLessonHistories = getLessonHistories;
-exports.getRecentLessonHistories = getRecentLessonHistories;
-exports.getRecentLessonSummaries = getRecentLessonSummaries;
 // 履歴を保存
-function saveLessonHistory(history) {
+export function saveLessonHistory(history) {
     const all = getLessonHistories();
     all.push(history);
     localStorage.setItem('lessonHistories', JSON.stringify(all));
 }
 // 履歴一覧を取得（新しい順）
-function getLessonHistories() {
+export function getLessonHistories() {
     const raw = localStorage.getItem('lessonHistories');
     if (!raw)
         return [];
@@ -23,14 +17,14 @@ function getLessonHistories() {
     }
 }
 // 直近300件（新しい順）を取得（記事本文は除外）
-function getRecentLessonHistories() {
+export function getRecentLessonHistories() {
     return getLessonHistories()
         .slice(-300)
         .reverse()
         .map(({ article, ...rest }) => rest);
 }
 // サマリーページに表示する内容＋日時を返す（直近N件、新しい順、記事本文除外）
-function getRecentLessonSummaries(n = 1) {
+export function getRecentLessonSummaries(n = 1) {
     return getLessonHistories()
         .slice(-n)
         .reverse()

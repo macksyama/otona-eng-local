@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getLessonHistories, LessonHistory, getRecentLessonSummaries } from './history';
+import { LessonHistory } from '../utils/firestoreHistory';
+import { getHistories, deleteHistory } from '../utils/historyManager';
+import { getRecentLessonSummaries } from './history'; // サマリー取得はlocalStorageのみ対応のため既存利用
 import Summary from './Summary';
 
 // カレンダー用ユーティリティ
@@ -18,7 +20,7 @@ interface HistoryListProps {
 }
 
 const HistoryList: React.FC<HistoryListProps> = ({ setPage, reloadKey, showBackToSummary = true }) => {
-  const [histories, setHistories] = useState<LessonHistory[]>(() => getLessonHistories().slice().reverse());
+  const [histories, setHistories] = useState<LessonHistory[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSummary, setModalSummary] = useState<any>(null);
@@ -80,6 +82,14 @@ const HistoryList: React.FC<HistoryListProps> = ({ setPage, reloadKey, showBackT
       setLoadingSummary(false);
     }
     fetchSummary();
+  }, [reloadKey]);
+
+  // 履歴一覧を取得
+  useEffect(() => {
+    (async () => {
+      const h = await getHistories();
+      setHistories(h.slice().reverse());
+    })();
   }, [reloadKey]);
 
   // カテゴリごとに整形して表示（Markdown風記法対応・ノイズ除去）
@@ -191,12 +201,15 @@ const HistoryList: React.FC<HistoryListProps> = ({ setPage, reloadKey, showBackT
   }
 
   // 履歴削除処理
-  const handleDelete = (lessonId: string) => {
+  const handleDelete = async (lessonId: string) => {
     if (!window.confirm('この履歴を削除しますか？')) return;
-    const all = getLessonHistories();
-    const filtered = all.filter(h => h.lessonId !== lessonId);
-    localStorage.setItem('lessonHistories', JSON.stringify(filtered));
-    setHistories(filtered.slice().reverse());
+    try {
+      await deleteHistory(lessonId);
+      const h = await getHistories();
+      setHistories(h.slice().reverse());
+    } catch (e: any) {
+      alert(e.message || '削除に失敗しました');
+    }
   };
 
   // 履歴詳細モーダルを開く

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Page } from './App';
 import Summary from './Summary';
-import { saveLessonHistory } from './history';
+import { saveHistory } from '../utils/historyManager';
 import { jsonrepair } from 'jsonrepair';
 
 const ipcRenderer = window.electronAPI?.ipcRenderer;
@@ -570,7 +570,7 @@ const Lesson: React.FC<Props> = ({ article, setPage, setSummaryData }) => {
       });
       // 履歴保存
       try {
-        saveLessonHistory({
+        await saveHistory({
           lessonId: new Date().toISOString(),
           timestamp: new Date().toISOString(),
           article,

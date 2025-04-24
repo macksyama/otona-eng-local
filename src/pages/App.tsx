@@ -6,16 +6,29 @@ import Settings from './Settings';
 import NewsList from './NewsList';
 import HistoryList from './HistoryList';
 import Login from './Login';
+import AuthChoice from './AuthChoice';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, provider } from '../firebase';
+import { migrateLocalToFirestore } from '../utils/historyManager';
 
 // 画面遷移用の状態
 export type Page = 'news' | 'home' | 'lesson' | 'summary' | 'settings' | 'history';
+
+type AuthState = 'none' | 'password' | 'google' | 'guest';
 
 const App: React.FC = () => {
   const [page, setPage] = useState<Page>('news');
   const [article, setArticle] = useState<string>('');
   const [summaryData, setSummaryData] = useState<any>(null);
   const prevPage = useRef<Page>('news');
-  const [authed, setAuthed] = useState(() => localStorage.getItem('otona-auth') === '1');
+  // 認証状態をlocalStorageから復元
+  const [authState, setAuthState] = useState<AuthState>(() => {
+    const v = localStorage.getItem('otona-auth');
+    if (v === 'google') return 'google';
+    if (v === 'guest') return 'guest';
+    if (v === '1') return 'password';
+    return 'none';
+  });
 
   // ページ遷移時に直前のページを記憶
   const handleSetPage = (next: Page) => {
@@ -25,13 +38,33 @@ const App: React.FC = () => {
     setPage(next);
   };
 
-  if (!authed) {
-    return <Login onLogin={() => setAuthed(true)} />;
+  // パスワード認証後
+  if (authState === 'none') {
+    return <Login onLogin={() => setAuthState('password')} />;
+  }
+
+  // Googleログイン/ゲスト選択画面
+  if (authState === 'password') {
+    const handleGoogleLogin = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+        await migrateLocalToFirestore();
+        localStorage.setItem('otona-auth', 'google');
+        setAuthState('google');
+      } catch (e) {
+        alert('Googleログインに失敗しました');
+      }
+    };
+    const handleGuest = () => {
+      localStorage.setItem('otona-auth', 'guest');
+      setAuthState('guest');
+    };
+    return <AuthChoice onGoogleLogin={handleGoogleLogin} onGuest={handleGuest} />;
   }
 
   const handleLogout = () => {
     localStorage.removeItem('otona-auth');
-    setAuthed(false);
+    setAuthState('none');
   };
 
   // Heroicons Cog8Tooth outline（中央がずれない）

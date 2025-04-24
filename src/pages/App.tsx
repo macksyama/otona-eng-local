@@ -82,13 +82,11 @@ const App: React.FC = () => {
     </svg>
   );
 
-  // 履歴アイコン（Time Machine風: 円形矢印＋時計）
+  // 履歴アイコン（時計マーク: 丸＋時計針のみ、枠は細め、矢印なし）
   const HistoryIcon = (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" width="32" height="32">
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" fill="none" />
       <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M20 12a8 8 0 1 0-2.34 5.66" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M20 12v4h-4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
 
@@ -102,47 +100,53 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      {/* 右上ナビゲーションアイコン群 */}
-      <div style={{ position: 'absolute', top: 16, right: 96, display: 'flex', gap: 8, zIndex: 20 }}>
-        {/* Homeアイコン */}
-        <button
-          onClick={() => handleSetPage('news')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-          aria-label="ホーム"
-        >
-          {HomeIcon}
-        </button>
-        {/* 履歴アイコン */}
-        <button
-          onClick={() => handleSetPage('history')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-          aria-label="履歴"
-        >
-          {HistoryIcon}
-        </button>
+      {/* 画面上部ナビゲーションバー */}
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 30, background: 'rgba(255,255,255,0.97)', borderBottom: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', alignItems: 'center', height: 64, padding: '0 16px' }}>
+          <div style={{ fontWeight: 700, fontSize: 22, letterSpacing: 1, flex: 1 }}>Otona English</div>
+          {/* Homeアイコン */}
+          <button
+            onClick={() => handleSetPage('news')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+            aria-label="ホーム"
+          >
+            {HomeIcon}
+          </button>
+          {/* 履歴アイコン */}
+          <button
+            onClick={() => handleSetPage('history')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+            aria-label="履歴"
+          >
+            {HistoryIcon}
+          </button>
+          {/* 設定アイコン */}
+          <button
+            onClick={() => handleSetPage('settings')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+            aria-label="設定"
+          >
+            {GearIcon}
+          </button>
+          {/* ログアウトアイコンボタン（黒色） */}
+          <button
+            onClick={handleLogout}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#222' }}
+            aria-label="ログアウト"
+          >
+            {LogoutIcon}
+          </button>
+        </div>
       </div>
-      {/* 設定アイコン */}
-      <button
-        onClick={() => handleSetPage('settings')}
-        style={{ position: 'absolute', top: 16, right: 48, background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-        aria-label="設定"
-      >
-        {GearIcon}
-      </button>
-      {/* ログアウトアイコンボタン */}
-      <button
-        onClick={handleLogout}
-        style={{ position: 'absolute', top: 16, right: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#f00' }}
-        aria-label="ログアウト"
-      >
-        {LogoutIcon}
-      </button>
+      {/* 上部バーの高さ分余白を追加 */}
+      <div style={{ height: 64 }} />
+      {/* メイン画面 */}
       {page === 'settings' ? (
         <div>
           <Settings />
           <button
             onClick={() => setPage(prevPage.current)}
-            style={{ position: 'absolute', top: 16, left: 24, background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, zIndex: 10 }}
+            style={{ position: 'absolute', top: 80, left: 24, background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, zIndex: 10 }}
           >
             ← 戻る
           </button>

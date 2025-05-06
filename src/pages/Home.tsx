@@ -6,6 +6,17 @@ interface Props {
   setArticle: (article: string) => void;
 }
 
+// 文字数で分割
+function splitByLength(text: string, maxLen: number) {
+  const parts = [];
+  let i = 0;
+  while (i < text.length) {
+    parts.push(text.slice(i, i + maxLen));
+    i += maxLen;
+  }
+  return parts;
+}
+
 const Home: React.FC<Props> = ({ setPage, setArticle }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,39 +27,62 @@ const Home: React.FC<Props> = ({ setPage, setArticle }) => {
     return `#Order\n以下の英語記事テキストから、本文以外の余分な情報（ナビゲーション、広告、フッター、著作権表示、関連記事リスト等）をすべて除去し、「記事本文」だけを抽出してください。本文そのものの内容・文は一切改変しないでください。\n\n#Output format (STRICTLY JSON ONLY, NO explanation, NO code block, NO extra text. Output ONLY valid JSON object!):\n{\n  "cleaned_article": "（本文のみ）"\n}\n#Input\n${article}`;
   }
 
+  // 共通：APIリクエスト＆cleaned_article抽出
+  async function requestCleanedArticle(prompt: string): Promise<string> {
+    let cleaned = '';
+    if (window.electronAPI?.ipcRenderer) {
+      const res = await window.electronAPI.ipcRenderer.invoke('ask-ai', prompt);
+      if (res) {
+        try {
+          const match = typeof res === 'string' ? res.match(/\{[\s\S]*\}/) : null;
+          const jsonStr = match ? match[0] : res;
+          const parsed = JSON.parse(jsonStr);
+          cleaned = parsed.cleaned_article || '';
+        } catch {}
+      }
+    } else {
+      const res = await fetch('/api/ask-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: prompt, type: 'perplexity' })
+      });
+      const data = await res.json();
+      let content = data?.choices?.[0]?.message?.content || '';
+      try {
+        if (typeof content === 'string' && content.trim().startsWith('{')) {
+          const parsed = JSON.parse(content);
+          cleaned = parsed.cleaned_article || '';
+        }
+      } catch {}
+    }
+    return cleaned;
+  }
+
   // 記事入力後、LLMで整形→レッスン画面へ遷移
   const handleStart = async () => {
     setLoading(true);
     setError(null);
-    const prompt = buildCleanPrompt(input);
+
+    const maxLen = 5000; // 1リクエストあたりの最大文字数
+    let cleaned = '';
+
     try {
-      let cleaned = '';
-      if (window.electronAPI?.ipcRenderer) {
-        const res = await window.electronAPI.ipcRenderer.invoke('ask-ai', prompt);
-        if (res) {
-          try {
-            const match = typeof res === 'string' ? res.match(/\{[\s\S]*\}/) : null;
-            const jsonStr = match ? match[0] : res;
-            const parsed = JSON.parse(jsonStr);
-            cleaned = parsed.cleaned_article || '';
-          } catch {}
+      if (input.length > maxLen) {
+        // 分割送信
+        const parts = splitByLength(input, maxLen);
+        let merged = '';
+        for (const part of parts) {
+          const prompt = buildCleanPrompt(part);
+          const partCleaned = await requestCleanedArticle(prompt);
+          merged += partCleaned;
         }
+        cleaned = merged;
       } else {
-        // PWA/Web: /api/ask-ai経由で記事整形
-        const res = await fetch('/api/ask-ai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: prompt, type: 'perplexity' })
-        });
-        const data = await res.json();
-        let content = data?.choices?.[0]?.message?.content || '';
-        try {
-          if (typeof content === 'string' && content.trim().startsWith('{')) {
-            const parsed = JSON.parse(content);
-            cleaned = parsed.cleaned_article || '';
-          }
-        } catch {}
+        // 通常通り一括送信
+        const prompt = buildCleanPrompt(input);
+        cleaned = await requestCleanedArticle(prompt);
       }
+
       if (cleaned && cleaned.length > 50) {
         setArticle(cleaned);
       } else {
@@ -84,4 +118,4 @@ const Home: React.FC<Props> = ({ setPage, setArticle }) => {
   );
 };
 
-export default Home; 
+export default Home;

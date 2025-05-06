@@ -63,7 +63,7 @@ const Home: React.FC<Props> = ({ setPage, setArticle }) => {
     setLoading(true);
     setError(null);
 
-    const maxLen = 5000; // 1リクエストあたりの最大文字数
+    const maxLen = 3000; // 1リクエストあたりの最大文字数
     let cleaned = '';
 
     try {
